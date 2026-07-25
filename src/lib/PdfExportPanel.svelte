@@ -9,8 +9,8 @@
         const canvasX = (screenCenterX - boardData.offsetX) / boardData.zoom;
         const canvasY = (screenCenterY - boardData.offsetY) / boardData.zoom;
         
-        const width = 595; // A4 portrait width in pt
-        const height = 842; // A4 portrait height in pt
+        const width = 297.5; // A4 portrait width in pt (2x smaller)
+        const height = 421;  // A4 portrait height in pt (2x smaller)
         const nextNumber = boardData.pdfFrames.length > 0 
             ? Math.max(...boardData.pdfFrames.map(f => f.number)) + 1 
             : 1;
@@ -35,8 +35,8 @@
         const canvasX = (screenCenterX - boardData.offsetX) / boardData.zoom;
         const canvasY = (screenCenterY - boardData.offsetY) / boardData.zoom;
         
-        const width = 842; // A4 landscape width in pt
-        const height = 595; // A4 landscape height in pt
+        const width = 421;   // A4 landscape width in pt (2x smaller)
+        const height = 297.5; // A4 landscape height in pt (2x smaller)
         const nextNumber = boardData.pdfFrames.length > 0 
             ? Math.max(...boardData.pdfFrames.map(f => f.number)) + 1 
             : 1;

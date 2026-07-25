@@ -135,8 +135,8 @@
                 (screenCenterX - boardData.offsetX) / boardData.zoom;
             const canvasY =
                 (screenCenterY - boardData.offsetY) / boardData.zoom;
-            const defWidth = 595;
-            const defHeight = 842;
+            const defWidth = 297.5;
+            const defHeight = 421;
 
             boardData.pdfFrames = [
                 {

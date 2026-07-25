@@ -219,7 +219,9 @@
             const screenCenterY = window.innerHeight / 2;
             const canvasX = (screenCenterX - boardData.offsetX) / boardData.zoom;
             const canvasY = (screenCenterY - boardData.offsetY) / boardData.zoom;
-            boardData.pdfFrames = [{ id: Date.now() + Math.random(), x: canvasX - 595 / 2, y: canvasY - 842 / 2, width: 595, height: 842, isVertical: true, number: 1 }];
+            const defWidth = 297.5;
+            const defHeight = 421;
+            boardData.pdfFrames = [{ id: Date.now() + Math.random(), x: canvasX - defWidth / 2, y: canvasY - defHeight / 2, width: defWidth, height: defHeight, isVertical: true, number: 1 }];
         }
     }
 </script>

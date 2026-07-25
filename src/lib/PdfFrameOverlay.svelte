@@ -12,12 +12,16 @@
     let dragStartY = 0;
     let frameStartX = 0;
     let frameStartY = 0;
+    let dragPointerId = null;
+    let dragTargetEl = null;
 
     // Resize states
     let isResizing = false;
     let resizeFrame = null;
     let resizeStartX = 0;
     let resizeStartWidth = 0;
+    let resizePointerId = null;
+    let resizeTargetEl = null;
 
     onMount(() => {
         const handleOutsideClick = (e) => {
@@ -41,10 +45,21 @@
 
     // Dragging
     function startDragFrame(e, frame) {
-        if (e.button !== 0) return; // Left click only
+        if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
         if (e.target.closest(".frame-number-input") || e.target.closest(".resize-handle")) {
             return;
         }
+        e.stopPropagation();
+        if (e.cancelable) e.preventDefault();
+
+        const target = e.currentTarget;
+        const pointerId = e.pointerId;
+        if (target && target.setPointerCapture) {
+            try {
+                target.setPointerCapture(pointerId);
+            } catch (err) {}
+        }
+
         selectedFrameId = frame.id;
         isDragging = true;
         dragFrame = frame;
@@ -52,6 +67,8 @@
         dragStartY = e.clientY;
         frameStartX = frame.x;
         frameStartY = frame.y;
+        dragPointerId = pointerId;
+        dragTargetEl = target;
         
         window.addEventListener("pointermove", handleDragFrame);
         window.addEventListener("pointerup", stopDragFrame);
@@ -60,6 +77,7 @@
 
     function handleDragFrame(e) {
         if (!isDragging || !dragFrame) return;
+        if (dragPointerId !== null && e.pointerId !== dragPointerId) return;
         const dx = (e.clientX - dragStartX) / boardData.zoom;
         const dy = (e.clientY - dragStartY) / boardData.zoom;
         
@@ -75,9 +93,16 @@
         });
     }
 
-    function stopDragFrame() {
+    function stopDragFrame(e) {
+        if (dragTargetEl && dragPointerId !== null && dragTargetEl.releasePointerCapture) {
+            try {
+                dragTargetEl.releasePointerCapture(dragPointerId);
+            } catch (err) {}
+        }
         isDragging = false;
         dragFrame = null;
+        dragPointerId = null;
+        dragTargetEl = null;
         window.removeEventListener("pointermove", handleDragFrame);
         window.removeEventListener("pointerup", stopDragFrame);
         window.removeEventListener("pointercancel", stopDragFrame);
@@ -85,14 +110,25 @@
 
     // Proportional Resizing
     function startResizeFrame(e, frame) {
-        if (e.button !== 0) return;
+        if (e.button !== undefined && e.button !== 0 && e.pointerType === 'mouse') return;
         e.stopPropagation();
-        e.preventDefault();
+        if (e.cancelable) e.preventDefault();
+
+        const target = e.currentTarget;
+        const pointerId = e.pointerId;
+        if (target && target.setPointerCapture) {
+            try {
+                target.setPointerCapture(pointerId);
+            } catch (err) {}
+        }
+
         selectedFrameId = frame.id;
         isResizing = true;
         resizeFrame = frame;
         resizeStartX = e.clientX;
         resizeStartWidth = frame.width;
+        resizePointerId = pointerId;
+        resizeTargetEl = target;
         
         window.addEventListener("pointermove", handleResizeFrame);
         window.addEventListener("pointerup", stopResizeFrame);
@@ -101,10 +137,11 @@
 
     function handleResizeFrame(e) {
         if (!isResizing || !resizeFrame) return;
+        if (resizePointerId !== null && e.pointerId !== resizePointerId) return;
         const dx = (e.clientX - resizeStartX) / boardData.zoom;
         
         let newWidth = resizeStartWidth + dx;
-        const minWidth = 150;
+        const minWidth = 50;
         if (newWidth < minWidth) newWidth = minWidth;
         
         // Keep standard A4 ratio: Width / Height
@@ -124,9 +161,16 @@
         });
     }
 
-    function stopResizeFrame() {
+    function stopResizeFrame(e) {
+        if (resizeTargetEl && resizePointerId !== null && resizeTargetEl.releasePointerCapture) {
+            try {
+                resizeTargetEl.releasePointerCapture(resizePointerId);
+            } catch (err) {}
+        }
         isResizing = false;
         resizeFrame = null;
+        resizePointerId = null;
+        resizeTargetEl = null;
         window.removeEventListener("pointermove", handleResizeFrame);
         window.removeEventListener("pointerup", stopResizeFrame);
         window.removeEventListener("pointercancel", stopResizeFrame);
@@ -197,6 +241,7 @@
                         class="frame-number-input"
                         title="Номер сторінки в PDF"
                         onpointerdown={(e) => e.stopPropagation()}
+                        ontouchstart={(e) => e.stopPropagation()}
                     />
                 </div>
                 
@@ -257,6 +302,7 @@
         pointer-events: none;
         z-index: 1000;
         overflow: hidden;
+        touch-action: none;
     }
 
     .pdf-frame-element {
@@ -267,6 +313,10 @@
         box-sizing: border-box;
         cursor: grab;
         transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
     }
 
     .pdf-frame-element:hover {
@@ -306,6 +356,7 @@
         outline: none;
         box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
         transition: transform 0.2s, background-color 0.2s;
+        touch-action: auto;
     }
 
     .frame-number-input:hover {
@@ -344,8 +395,8 @@
         position: absolute;
         bottom: 0;
         right: 0;
-        width: 18px;
-        height: 18px;
+        width: 26px;
+        height: 26px;
         background: #007bff;
         color: white;
         border-top-left-radius: 8px;
@@ -356,16 +407,30 @@
         box-shadow: -2px -2px 6px rgba(0, 123, 255, 0.15);
         z-index: 10;
         transition: background-color 0.2s, transform 0.1s;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
     }
 
-    .resize-handle:hover {
+    .resize-handle::after {
+        content: '';
+        position: absolute;
+        bottom: -6px;
+        right: -6px;
+        width: 44px;
+        height: 44px;
+        pointer-events: auto;
+    }
+
+    .resize-handle:hover, .resize-handle:active {
         background-color: #0056b3;
-        transform: scale(1.1);
+        transform: scale(1.15);
     }
 
     .resize-icon {
-        width: 10px;
-        height: 10px;
+        width: 14px;
+        height: 14px;
     }
 
     /* Context Menu */
