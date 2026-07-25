@@ -16,7 +16,7 @@
     let isPanning = $state(false); // Переміщення всієї дошки
     let isSelectingArea = $state(false); // Малювання рамки виділення
     let isResizing = $state(false); // Зміна розміру
-    
+
     // Змінні для масштабування
     let activeResizeHandle = $state(null); // 'nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'
     let resizeOriginalLine = null;
@@ -57,7 +57,7 @@
     // Стан для вводу тексту
     let textInputState = $state({
         active: false,
-        id: null,         // null = новий текст; id = редагування існуючого
+        id: null, // null = новий текст; id = редагування існуючого
         isEditing: false, // true коли редагуємо наявний текст
         x: 0,
         y: 0,
@@ -79,14 +79,16 @@
             // Оновлюємо існуючий текстовий об'єкт
             saveState();
             if (trimmed) {
-                boardData.lines = boardData.lines.map(l =>
+                boardData.lines = boardData.lines.map((l) =>
                     l.id === textInputState.id
                         ? { ...l, text: textInputState.text }
-                        : l
+                        : l,
                 );
             } else {
                 // Якщо текст порожній — видаляємо об'єкт
-                boardData.lines = boardData.lines.filter(l => l.id !== textInputState.id);
+                boardData.lines = boardData.lines.filter(
+                    (l) => l.id !== textInputState.id,
+                );
                 boardData.selectedLineIds = [];
             }
         } else if (trimmed) {
@@ -96,12 +98,17 @@
                 ...boardData.lines,
                 {
                     id: textInputState.id,
-                    tool: 'text',
+                    tool: "text",
                     text: textInputState.text,
                     color: textInputState.color,
                     fontSize: textInputState.fontSize,
-                    points: [{ x: textInputState.canvasX, y: textInputState.canvasY }]
-                }
+                    points: [
+                        {
+                            x: textInputState.canvasX,
+                            y: textInputState.canvasY,
+                        },
+                    ],
+                },
             ];
         }
         textInputState.active = false;
@@ -124,7 +131,12 @@
             fontSize: line.fontSize || 24,
         };
         showMenu = false;
-        setTimeout(() => { if (textInputRef) { textInputRef.focus(); textInputRef.select(); } }, 10);
+        setTimeout(() => {
+            if (textInputRef) {
+                textInputRef.focus();
+                textInputRef.select();
+            }
+        }, 10);
     }
 
     onMount(() => {
@@ -136,7 +148,7 @@
         const handleBeforeUnload = (e) => {
             if (boardData.lines.length > 0) {
                 e.preventDefault();
-                e.returnValue = '';
+                e.returnValue = "";
             }
         };
         window.addEventListener("beforeunload", handleBeforeUnload);
@@ -182,8 +194,8 @@
     $effect(() => {
         const ids = boardData.selectedLineIds;
         const tool = brushSettings.tool;
-        if (ids.length === 1 && tool === 'select') {
-            const selectedLine = boardData.lines.find(l => l.id === ids[0]);
+        if (ids.length === 1 && tool === "select") {
+            const selectedLine = boardData.lines.find((l) => l.id === ids[0]);
             if (selectedLine) {
                 untrack(() => {
                     if (brushSettings.color !== selectedLine.color) {
@@ -223,7 +235,7 @@
                 p[p.length - 2].x,
                 p[p.length - 2].y,
                 p[p.length - 1].x,
-                p[p.length - 1].y
+                p[p.length - 1].y,
             );
         }
         ctx.stroke();
@@ -248,8 +260,13 @@
 
         // 4. Малюємо всі лінії на офскрін канвасі для підтримки прозорої гумки
         if (offscreenCtx) {
-            offscreenCtx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
-            
+            offscreenCtx.clearRect(
+                0,
+                0,
+                offscreenCanvas.width,
+                offscreenCanvas.height,
+            );
+
             // Застосовуємо ті ж трансформації до офскрін канвасу
             offscreenCtx.save();
             offscreenCtx.translate(boardData.offsetX, boardData.offsetY);
@@ -275,56 +292,70 @@
                     offscreenCtx.shadowBlur = 0;
                 }
 
-                if (line.tool === 'shape') {
+                if (line.tool === "shape") {
                     drawShape(offscreenCtx, line);
-                } else if (line.tool === 'text') {
+                } else if (line.tool === "text") {
                     offscreenCtx.font = `${line.fontSize || 24}px sans-serif`;
                     offscreenCtx.textBaseline = "top";
                     // Якщо багаторядковий текст, можна розділяти по \n, але тут поки простий рядок
-                    offscreenCtx.fillText(line.text, line.points[0].x, line.points[0].y);
+                    offscreenCtx.fillText(
+                        line.text,
+                        line.points[0].x,
+                        line.points[0].y,
+                    );
                 } else {
                     drawLine(offscreenCtx, line);
                 }
             });
 
             offscreenCtx.restore();
-            
+
             // Малюємо результат з офскрін канвасу на основний
             ctx.restore(); // Скидаємо трансформації перед drawImage, бо офскрін вже відрендерений з ними
             ctx.drawImage(offscreenCanvas, 0, 0);
 
             // Малюємо маркери ресайзу для одиничного виділення
-            if (boardData.selectedLineIds.length === 1 && brushSettings.tool === 'select') {
-                const selectedLine = boardData.lines.find(l => l.id === boardData.selectedLineIds[0]);
+            if (
+                boardData.selectedLineIds.length === 1 &&
+                brushSettings.tool === "select"
+            ) {
+                const selectedLine = boardData.lines.find(
+                    (l) => l.id === boardData.selectedLineIds[0],
+                );
                 if (selectedLine) {
                     const bb = getBoundingBox(selectedLine);
                     const handles = getResizeHandles(bb);
-                    
+
                     ctx.save();
                     ctx.translate(boardData.offsetX, boardData.offsetY);
                     ctx.scale(boardData.zoom, boardData.zoom);
-                    
+
                     // Рамка
                     ctx.beginPath();
-                    ctx.rect(bb.minX, bb.minY, bb.maxX - bb.minX, bb.maxY - bb.minY);
-                    ctx.strokeStyle = '#007bff';
+                    ctx.rect(
+                        bb.minX,
+                        bb.minY,
+                        bb.maxX - bb.minX,
+                        bb.maxY - bb.minY,
+                    );
+                    ctx.strokeStyle = "#007bff";
                     ctx.lineWidth = 1 / boardData.zoom;
                     ctx.setLineDash([5 / boardData.zoom, 5 / boardData.zoom]);
                     ctx.stroke();
                     ctx.setLineDash([]);
-                    
+
                     // Маркери
-                    ctx.fillStyle = '#ffffff';
-                    ctx.strokeStyle = '#007bff';
+                    ctx.fillStyle = "#ffffff";
+                    ctx.strokeStyle = "#007bff";
                     ctx.lineWidth = 1.5 / boardData.zoom;
-                    
-                    handles.forEach(h => {
+
+                    handles.forEach((h) => {
                         ctx.beginPath();
                         ctx.arc(h.x, h.y, 4 / boardData.zoom, 0, 2 * Math.PI);
                         ctx.fill();
                         ctx.stroke();
                     });
-                    
+
                     ctx.restore();
                 }
             }
@@ -364,25 +395,59 @@
                 ctx.fillStyle = line.color;
                 const offsetLine = {
                     ...line,
-                    points: line.points.map(p => ({ x: p.x + dx, y: p.y + dy }))
+                    points: line.points.map((p) => ({
+                        x: p.x + dx,
+                        y: p.y + dy,
+                    })),
                 };
-                if (offsetLine.tool === 'shape') {
+                if (offsetLine.tool === "shape") {
                     drawShape(ctx, offsetLine);
-                } else if (offsetLine.tool === 'text') {
+                } else if (offsetLine.tool === "text") {
                     ctx.font = `${offsetLine.fontSize || 24}px sans-serif`;
                     ctx.textBaseline = "top";
-                    ctx.fillText(offsetLine.text, offsetLine.points[0].x, offsetLine.points[0].y);
+                    ctx.fillText(
+                        offsetLine.text,
+                        offsetLine.points[0].x,
+                        offsetLine.points[0].y,
+                    );
                 } else {
                     drawLine(ctx, offsetLine);
                 }
             });
             ctx.restore();
         }
+
+        // 7. Індикатор прилипання до лінійки
+        if (
+            showCursor &&
+            boardData.rulers &&
+            boardData.rulers.length > 0 &&
+            (brushSettings.tool === "brush" ||
+                brushSettings.tool === "eraser" ||
+                brushSettings.tool === "shape")
+        ) {
+            const rect2 = canvas ? canvas.getBoundingClientRect() : { left: 0, top: 0 };
+            const hoverCanvas = toCanvas(mouseX - rect2.left, mouseY - rect2.top);
+            const snapResult = snapToRuler(hoverCanvas.x, hoverCanvas.y);
+            if (snapResult.isSnapped) {
+                ctx.save();
+                ctx.translate(boardData.offsetX, boardData.offsetY);
+                ctx.scale(boardData.zoom, boardData.zoom);
+                ctx.beginPath();
+                ctx.arc(snapResult.x, snapResult.y, 5 / boardData.zoom, 0, Math.PI * 2);
+                ctx.fillStyle = "rgba(0, 123, 255, 0.85)";
+                ctx.fill();
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 1.5 / boardData.zoom;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
     }
 
     function drawOverlay() {
         const type = bgSettings.overlay;
-        if (type === 'none') return;
+        if (type === "none") return;
 
         const step = bgSettings.scale * boardData.zoom;
         if (step < 2) return; // Занадто малий крок — не малюємо
@@ -395,7 +460,7 @@
         ctx.strokeStyle = color;
         ctx.lineWidth = 1;
 
-        if (type === 'grid') {
+        if (type === "grid") {
             // Вертикальні лінії
             for (let x = startXGrid; x < canvas.width; x += step) {
                 ctx.moveTo(x, 0);
@@ -407,28 +472,34 @@
                 ctx.lineTo(canvas.width, y);
             }
             ctx.stroke();
-        } else if (type === 'lines') {
+        } else if (type === "lines") {
             // Тільки горизонтальні лінії
             for (let y = startYGrid; y < canvas.height; y += step) {
                 ctx.moveTo(0, y);
                 ctx.lineTo(canvas.width, y);
             }
             ctx.stroke();
-        } else if (type === 'diagonal') {
+        } else if (type === "diagonal") {
             // Для письма в молодшій школі (коса лінія)
             const smallHeight = step; // Висота робочого рядка
-            const gap = step * 2;     // Відстань між рядками
+            const gap = step * 2; // Відстань між рядками
             const patternHeight = smallHeight + gap;
 
             // Базовий зсув по Y для горизонтальних ліній
-            const startY = (boardData.offsetY % patternHeight + patternHeight) % patternHeight;
+            const startY =
+                ((boardData.offsetY % patternHeight) + patternHeight) %
+                patternHeight;
 
             // Горизонтальні лінії
-            for (let y = startY - patternHeight; y < canvas.height + patternHeight; y += patternHeight) {
+            for (
+                let y = startY - patternHeight;
+                y < canvas.height + patternHeight;
+                y += patternHeight
+            ) {
                 // Верхня лінія робочого рядка
                 ctx.moveTo(0, y);
                 ctx.lineTo(canvas.width, y);
-                
+
                 // Нижня лінія робочого рядка
                 ctx.moveTo(0, y + smallHeight);
                 ctx.lineTo(canvas.width, y + smallHeight);
@@ -439,24 +510,28 @@
             ctx.beginPath();
             ctx.strokeStyle = color;
             ctx.lineWidth = 1;
-            
+
             const diagStep = step * 2.5; // Відстань між косими лініями
             const w = canvas.width;
             const h = canvas.height;
-            
+
             // dx — зсув по x за всю висоту екрана (tan(25°) ≈ 0.46)
-            const dx = h * 0.46; 
-            
+            const dx = h * 0.46;
+
             // Зсув початку з урахуванням прокрутки (X = X0 - Y * 0.46)
             const diagShift = boardData.offsetX + boardData.offsetY * 0.46;
-            const diagOffset = (diagShift % diagStep + diagStep) % diagStep;
-            
-            for (let x = diagOffset - diagStep; x < w + dx + diagStep; x += diagStep) {
+            const diagOffset = ((diagShift % diagStep) + diagStep) % diagStep;
+
+            for (
+                let x = diagOffset - diagStep;
+                x < w + dx + diagStep;
+                x += diagStep
+            ) {
                 ctx.moveTo(x, 0);
                 ctx.lineTo(x - dx, h);
             }
             ctx.stroke();
-        } else if (type === 'dots') {
+        } else if (type === "dots") {
             // Крапки у вузлах сітки
             const dotRadius = Math.max(1, step * 0.06);
             ctx.fillStyle = color;
@@ -467,7 +542,7 @@
                     ctx.fill();
                 }
             }
-        } else if (type === 'draft') {
+        } else if (type === "draft") {
             // Сітка для креслення: основна сітка + дрібніша підсітка
             const subStep = step / 5;
             // Дрібна підсітка
@@ -541,11 +616,16 @@
     }
 
     function getBoundingBox(line) {
-        if (line.tool === 'text') {
+        if (line.tool === "text") {
             const w = line.text.length * ((line.fontSize || 24) * 0.6);
             const h = line.fontSize || 24;
-            return { minX: line.points[0].x, minY: line.points[0].y, maxX: line.points[0].x + w, maxY: line.points[0].y + h };
-        } else if (line.tool === 'shape') {
+            return {
+                minX: line.points[0].x,
+                minY: line.points[0].y,
+                maxX: line.points[0].x + w,
+                maxY: line.points[0].y + h,
+            };
+        } else if (line.tool === "shape") {
             const p1 = line.points[0];
             const p2 = line.points[1] || p1;
 
@@ -554,53 +634,96 @@
             const stdMinY = Math.min(p1.y, p2.y);
             const stdMaxX = Math.max(p1.x, p2.x);
             const stdMaxY = Math.max(p1.y, p2.y);
-            const width  = stdMaxX - stdMinX;
+            const width = stdMaxX - stdMinX;
             const height = stdMaxY - stdMinY;
 
             // Для пропорційних фігур — обчислюємо точні межі, як у shapeRenderer.js
             switch (line.shapeType) {
-                case 'circle':
-                case 'sphere': {
+                case "circle":
+                case "sphere": {
                     // arc(p1.x, p1.y, radius, ...) де radius = dist(p1, p2)
-                    const radius = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
-                    return { minX: p1.x - radius, minY: p1.y - radius, maxX: p1.x + radius, maxY: p1.y + radius };
+                    const radius = Math.sqrt(
+                        (p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2,
+                    );
+                    return {
+                        minX: p1.x - radius,
+                        minY: p1.y - radius,
+                        maxX: p1.x + radius,
+                        maxY: p1.y + radius,
+                    };
                 }
-                case 'square': {
+                case "square": {
                     // rect від p1, зі стороною = max(|dx|, |dy|)
-                    const sqSide = Math.max(Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y));
+                    const sqSide = Math.max(
+                        Math.abs(p2.x - p1.x),
+                        Math.abs(p2.y - p1.y),
+                    );
                     const sx = p2.x < p1.x ? p1.x - sqSide : p1.x;
                     const sy = p2.y < p1.y ? p1.y - sqSide : p1.y;
-                    return { minX: sx, minY: sy, maxX: sx + sqSide, maxY: sy + sqSide };
+                    return {
+                        minX: sx,
+                        minY: sy,
+                        maxX: sx + sqSide,
+                        maxY: sy + sqSide,
+                    };
                 }
-                case 'equilateral_triangle': {
+                case "equilateral_triangle": {
                     // вершина в (p1.x, p1.y - eh), основа симетрична навколо p1.x
-                    const eqSide = Math.max(Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y));
-                    const eh = eqSide * Math.sqrt(3) / 2;
-                    return { minX: p1.x - eqSide / 2, minY: p1.y - eh, maxX: p1.x + eqSide / 2, maxY: p1.y + eh / 2 };
+                    const eqSide = Math.max(
+                        Math.abs(p2.x - p1.x),
+                        Math.abs(p2.y - p1.y),
+                    );
+                    const eh = (eqSide * Math.sqrt(3)) / 2;
+                    return {
+                        minX: p1.x - eqSide / 2,
+                        minY: p1.y - eh,
+                        maxX: p1.x + eqSide / 2,
+                        maxY: p1.y + eh / 2,
+                    };
                 }
-                case 'cube': {
+                case "cube": {
                     // Front face від p1, back face зміщена на (cdx, -cdy)
-                    const cubeSide = Math.max(Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y)) * 0.7;
+                    const cubeSide =
+                        Math.max(Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y)) *
+                        0.7;
                     const cdx = cubeSide * 0.4;
                     const cdy = cubeSide * 0.4;
-                    return { minX: p1.x, minY: p1.y - cdy, maxX: p1.x + cubeSide + cdx, maxY: p1.y + cubeSide };
+                    return {
+                        minX: p1.x,
+                        minY: p1.y - cdy,
+                        maxX: p1.x + cubeSide + cdx,
+                        maxY: p1.y + cubeSide,
+                    };
                 }
-                case 'parallelepiped': {
+                case "parallelepiped": {
                     // Front face від p1, back face зміщена на (pdx, -pdy)
                     const ppw = width * 0.7;
                     const pph = height * 0.7;
                     const pdx = width * 0.3;
                     const pdy = height * 0.3;
-                    return { minX: p1.x, minY: p1.y - pdy, maxX: p1.x + ppw + pdx, maxY: p1.y + pph };
+                    return {
+                        minX: p1.x,
+                        minY: p1.y - pdy,
+                        maxX: p1.x + ppw + pdx,
+                        maxY: p1.y + pph,
+                    };
                 }
                 default:
                     // rectangle, ellipse, triangle, right_triangle, trapezoid,
                     // parallelogram, cylinder, cone, pyramid, line, arrow тощо
-                    return { minX: stdMinX, minY: stdMinY, maxX: stdMaxX, maxY: stdMaxY };
+                    return {
+                        minX: stdMinX,
+                        minY: stdMinY,
+                        maxX: stdMaxX,
+                        maxY: stdMaxY,
+                    };
             }
         } else {
-            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-            line.points.forEach(p => {
+            let minX = Infinity,
+                minY = Infinity,
+                maxX = -Infinity,
+                maxY = -Infinity;
+            line.points.forEach((p) => {
                 if (p.x < minX) minX = p.x;
                 if (p.y < minY) minY = p.y;
                 if (p.x > maxX) maxX = p.x;
@@ -615,16 +738,64 @@
         const hw = size / 2;
         const cx = (bb.minX + bb.maxX) / 2;
         const cy = (bb.minY + bb.maxY) / 2;
-        
+
         return [
-            { id: 'nw', x: bb.minX, y: bb.minY, rect: [bb.minX - hw, bb.minY - hw, size, size], cursor: 'nwse-resize' },
-            { id: 'n',  x: cx,      y: bb.minY, rect: [cx - hw, bb.minY - hw, size, size], cursor: 'ns-resize' },
-            { id: 'ne', x: bb.maxX, y: bb.minY, rect: [bb.maxX - hw, bb.minY - hw, size, size], cursor: 'nesw-resize' },
-            { id: 'e',  x: bb.maxX, y: cy,      rect: [bb.maxX - hw, cy - hw, size, size], cursor: 'ew-resize' },
-            { id: 'se', x: bb.maxX, y: bb.maxY, rect: [bb.maxX - hw, bb.maxY - hw, size, size], cursor: 'nwse-resize' },
-            { id: 's',  x: cx,      y: bb.maxY, rect: [cx - hw, bb.maxY - hw, size, size], cursor: 'ns-resize' },
-            { id: 'sw', x: bb.minX, y: bb.maxY, rect: [bb.minX - hw, bb.maxY - hw, size, size], cursor: 'nesw-resize' },
-            { id: 'w',  x: bb.minX, y: cy,      rect: [bb.minX - hw, cy - hw, size, size], cursor: 'ew-resize' },
+            {
+                id: "nw",
+                x: bb.minX,
+                y: bb.minY,
+                rect: [bb.minX - hw, bb.minY - hw, size, size],
+                cursor: "nwse-resize",
+            },
+            {
+                id: "n",
+                x: cx,
+                y: bb.minY,
+                rect: [cx - hw, bb.minY - hw, size, size],
+                cursor: "ns-resize",
+            },
+            {
+                id: "ne",
+                x: bb.maxX,
+                y: bb.minY,
+                rect: [bb.maxX - hw, bb.minY - hw, size, size],
+                cursor: "nesw-resize",
+            },
+            {
+                id: "e",
+                x: bb.maxX,
+                y: cy,
+                rect: [bb.maxX - hw, cy - hw, size, size],
+                cursor: "ew-resize",
+            },
+            {
+                id: "se",
+                x: bb.maxX,
+                y: bb.maxY,
+                rect: [bb.maxX - hw, bb.maxY - hw, size, size],
+                cursor: "nwse-resize",
+            },
+            {
+                id: "s",
+                x: cx,
+                y: bb.maxY,
+                rect: [cx - hw, bb.maxY - hw, size, size],
+                cursor: "ns-resize",
+            },
+            {
+                id: "sw",
+                x: bb.minX,
+                y: bb.maxY,
+                rect: [bb.minX - hw, bb.maxY - hw, size, size],
+                cursor: "nesw-resize",
+            },
+            {
+                id: "w",
+                x: bb.minX,
+                y: cy,
+                rect: [bb.minX - hw, cy - hw, size, size],
+                cursor: "ew-resize",
+            },
         ];
     }
 
@@ -639,9 +810,14 @@
         const minY = Math.min(p1.y, p2.y);
         const maxY = Math.max(p1.y, p2.y);
 
-        if (line.tool === 'shape' || line.tool === 'text') {
+        if (line.tool === "shape" || line.tool === "text") {
             const bb = getBoundingBox(line);
-            return !(bb.maxX < minX || bb.minX > maxX || bb.maxY < minY || bb.minY > maxY);
+            return !(
+                bb.maxX < minX ||
+                bb.minX > maxX ||
+                bb.maxY < minY ||
+                bb.minY > maxY
+            );
         }
 
         // Якщо хоча б одна точка лінії лежить всередині рамки — лінія вважається виділеною
@@ -652,14 +828,18 @@
 
     // Математика кліку мишкою по лінії (для поодинокого виділення)
     function isPointNearLine(px, py, line) {
-        if (line.tool === 'shape' || line.tool === 'text') {
+        if (line.tool === "shape" || line.tool === "text") {
             const bb = getBoundingBox(line);
             // Фіксований threshold для shape/text, не залежить від width
-            const threshold = Math.max(8, (line.width || 0)) / boardData.zoom;
-            return px >= bb.minX - threshold && px <= bb.maxX + threshold && 
-                   py >= bb.minY - threshold && py <= bb.maxY + threshold;
+            const threshold = Math.max(8, line.width || 0) / boardData.zoom;
+            return (
+                px >= bb.minX - threshold &&
+                px <= bb.maxX + threshold &&
+                py >= bb.minY - threshold &&
+                py <= bb.maxY + threshold
+            );
         }
-        
+
         // px, py вже мають бути в координатах канвасу
         const threshold = ((line.width || 2) + 10) / boardData.zoom;
         for (let i = 0; i < line.points.length - 1; i++) {
@@ -689,9 +869,73 @@
         return false;
     }
 
+    // Прилипання до краю лінійки (повертає снапнуту точку або оригінальну)
+    function snapToRuler(canvasX, canvasY) {
+        if (!boardData.rulers || boardData.rulers.length === 0) {
+            return { x: canvasX, y: canvasY, isSnapped: false };
+        }
+
+        const snapThreshold = 20 / boardData.zoom;
+        let bestSnap = null;
+        let minDist = snapThreshold;
+
+        for (const ruler of boardData.rulers) {
+            // Canvas width of ruler in canvas pixels
+            const mmPx = (bgSettings.scale / 5) * (ruler.scaleFactor || 1.0);
+            const totalWidth = ruler.lengthCm * 10 * mmPx;
+            const rulerHeightPx = 60;
+
+            // Transform point into ruler's local space (rotate by -angle)
+            const dx = canvasX - ruler.x;
+            const dy = canvasY - ruler.y;
+            const rad = (ruler.angle * Math.PI) / 180;
+            const cosA = Math.cos(rad);
+            const sinA = Math.sin(rad);
+
+            // Local coords (x along ruler, y perpendicular)
+            const lx = dx * cosA + dy * sinA;
+            const ly = -dx * sinA + dy * cosA;
+
+            // Only consider if within ruler length bounds (with small margin)
+            const margin = 8 / boardData.zoom;
+            if (lx >= -margin && lx <= totalWidth + margin) {
+                const clampedLx = Math.max(0, Math.min(totalWidth, lx));
+
+                // Top edge: ly ≈ 0
+                const distTop = Math.abs(ly);
+                if (distTop < minDist) {
+                    minDist = distTop;
+                    // Back-transform snapped point to canvas coords
+                    bestSnap = {
+                        x: ruler.x + clampedLx * cosA,
+                        y: ruler.y + clampedLx * sinA,
+                        isSnapped: true,
+                    };
+                }
+
+                // Bottom edge: ly ≈ rulerHeightPx
+                const distBottom = Math.abs(ly - rulerHeightPx);
+                if (distBottom < minDist) {
+                    minDist = distBottom;
+                    bestSnap = {
+                        x: ruler.x + clampedLx * cosA - rulerHeightPx * sinA,
+                        y: ruler.y + clampedLx * sinA + rulerHeightPx * cosA,
+                        isSnapped: true,
+                    };
+                }
+            }
+        }
+
+        return bestSnap ?? { x: canvasX, y: canvasY, isSnapped: false };
+    }
+
     function handlePointerDown(e) {
         if (boardData.isPdfMode) {
-            if (e.button === 1 || e.button === 2 || brushSettings.tool === "move") {
+            if (
+                e.button === 1 ||
+                e.button === 2 ||
+                brushSettings.tool === "move"
+            ) {
                 activePointers.set(e.pointerId, e);
                 try {
                     e.target.setPointerCapture(e.pointerId);
@@ -715,11 +959,13 @@
             isPanning = false;
             isSelectingArea = false;
             isMoving = false;
-            
-            // Якщо ми почали малювати лінію першим пальцем — видаляємо її, 
+
+            // Якщо ми почали малювати лінію першим пальцем — видаляємо її,
             // оскільки користувач перейшов до жесту двома пальцями
             if (currentLineId) {
-                boardData.lines = boardData.lines.filter((l) => l.id !== currentLineId);
+                boardData.lines = boardData.lines.filter(
+                    (l) => l.id !== currentLineId,
+                );
                 currentLineId = null;
             }
 
@@ -791,7 +1037,9 @@
                     color: brushSettings.color,
                     fontSize: 24 / boardData.zoom,
                 };
-                setTimeout(() => { if(textInputRef) textInputRef.focus(); }, 10);
+                setTimeout(() => {
+                    if (textInputRef) textInputRef.focus();
+                }, 10);
             }
             return;
         }
@@ -806,14 +1054,20 @@
         if (brushSettings.tool === "select") {
             // Перевіряємо чи клікнули на маркер ресайзу
             if (boardData.selectedLineIds.length === 1) {
-                const selectedLine = boardData.lines.find(l => l.id === boardData.selectedLineIds[0]);
+                const selectedLine = boardData.lines.find(
+                    (l) => l.id === boardData.selectedLineIds[0],
+                );
                 if (selectedLine) {
                     const bb = getBoundingBox(selectedLine);
                     const handles = getResizeHandles(bb);
                     let clickedHandle = null;
                     for (const h of handles) {
-                        if (canvasPos.x >= h.rect[0] && canvasPos.x <= h.rect[0] + h.rect[2] &&
-                            canvasPos.y >= h.rect[1] && canvasPos.y <= h.rect[1] + h.rect[3]) {
+                        if (
+                            canvasPos.x >= h.rect[0] &&
+                            canvasPos.x <= h.rect[0] + h.rect[2] &&
+                            canvasPos.y >= h.rect[1] &&
+                            canvasPos.y <= h.rect[1] + h.rect[3]
+                        ) {
                             clickedHandle = h;
                             break;
                         }
@@ -821,7 +1075,9 @@
                     if (clickedHandle) {
                         isResizing = true;
                         activeResizeHandle = clickedHandle.id;
-                        resizeOriginalLine = JSON.parse(JSON.stringify(selectedLine));
+                        resizeOriginalLine = JSON.parse(
+                            JSON.stringify(selectedLine),
+                        );
                         resizeOriginalBB = bb;
                         startX = screenX;
                         startY = screenY;
@@ -864,6 +1120,12 @@
             const id = Date.now() + Math.random();
             currentLineId = id;
 
+            // Прилипаємо до лінійки якщо олівець поруч
+            const snap0 = snapToRuler(canvasPos.x, canvasPos.y);
+            const startPoint = snap0.isSnapped
+                ? { x: snap0.x, y: snap0.y }
+                : { x: canvasPos.x, y: canvasPos.y };
+
             boardData.lines = [
                 ...boardData.lines,
                 {
@@ -872,7 +1134,7 @@
                     width: brushSettings.width,
                     tool: brushSettings.tool,
                     shapeType: brushSettings.shapeType,
-                    points: [{ x: canvasPos.x, y: canvasPos.y }],
+                    points: [startPoint],
                 },
             ];
             redraw();
@@ -899,18 +1161,23 @@
 
             let newZoom = initialZoom;
             if (initialTouchDistance > 0) {
-                newZoom = initialZoom * (currentDistance / initialTouchDistance);
+                newZoom =
+                    initialZoom * (currentDistance / initialTouchDistance);
             }
             newZoom = Math.max(0.1, Math.min(10, newZoom));
             boardData.zoom = newZoom;
 
             // Зсув вираховується так, щоб точка на канвасі під початковим центром жестів
             // залишалася під поточним центром дотиків пальців
-            const centerCanvasX = (initialTouchCenter.x - initialOffsetX) / initialZoom;
-            const centerCanvasY = (initialTouchCenter.y - initialOffsetY) / initialZoom;
+            const centerCanvasX =
+                (initialTouchCenter.x - initialOffsetX) / initialZoom;
+            const centerCanvasY =
+                (initialTouchCenter.y - initialOffsetY) / initialZoom;
 
-            boardData.offsetX = currentCenter.x - centerCanvasX * boardData.zoom;
-            boardData.offsetY = currentCenter.y - centerCanvasY * boardData.zoom;
+            boardData.offsetX =
+                currentCenter.x - centerCanvasX * boardData.zoom;
+            boardData.offsetY =
+                currentCenter.y - centerCanvasY * boardData.zoom;
 
             redraw();
             return;
@@ -932,18 +1199,29 @@
         showCursor = true;
 
         // Встановлення курсора для маркерів ресайзу та hover-підсвічування
-        if (brushSettings.tool === 'select' && !isResizing && !isMoving && !isSelectingArea) {
+        if (
+            brushSettings.tool === "select" &&
+            !isResizing &&
+            !isMoving &&
+            !isSelectingArea
+        ) {
             let foundHandle = null;
 
             // Перевіряємо маркери ресайзу для одиничного виділення
             if (boardData.selectedLineIds.length === 1) {
-                const selectedLine = boardData.lines.find(l => l.id === boardData.selectedLineIds[0]);
+                const selectedLine = boardData.lines.find(
+                    (l) => l.id === boardData.selectedLineIds[0],
+                );
                 if (selectedLine) {
                     const bb = getBoundingBox(selectedLine);
                     const handles = getResizeHandles(bb);
                     for (const h of handles) {
-                        if (canvasPos.x >= h.rect[0] && canvasPos.x <= h.rect[0] + h.rect[2] &&
-                            canvasPos.y >= h.rect[1] && canvasPos.y <= h.rect[1] + h.rect[3]) {
+                        if (
+                            canvasPos.x >= h.rect[0] &&
+                            canvasPos.x <= h.rect[0] + h.rect[2] &&
+                            canvasPos.y >= h.rect[1] &&
+                            canvasPos.y <= h.rect[1] + h.rect[3]
+                        ) {
                             foundHandle = h;
                             break;
                         }
@@ -959,7 +1237,13 @@
                 // Перевіряємо hover над будь-яким об'єктом для курсора "move"
                 let hoveredLine = null;
                 for (let i = boardData.lines.length - 1; i >= 0; i--) {
-                    if (isPointNearLine(canvasPos.x, canvasPos.y, boardData.lines[i])) {
+                    if (
+                        isPointNearLine(
+                            canvasPos.x,
+                            canvasPos.y,
+                            boardData.lines[i],
+                        )
+                    ) {
                         hoveredLine = boardData.lines[i];
                         break;
                     }
@@ -978,14 +1262,19 @@
             startY = screenY;
             redraw();
         } else if (isDrawing && currentLineId) {
+            // Перевіряємо чи потрібно прилипнути до лінійки
+            const snap = snapToRuler(canvasPos.x, canvasPos.y);
+            const drawX = snap.isSnapped ? snap.x : canvasPos.x;
+            const drawY = snap.isSnapped ? snap.y : canvasPos.y;
+
             boardData.lines = boardData.lines.map((line) => {
                 if (line.id === currentLineId) {
-                    if (line.tool === 'shape') {
+                    if (line.tool === "shape") {
                         const newPoints = [...line.points];
                         if (newPoints.length === 1) {
-                            newPoints.push({ x: canvasPos.x, y: canvasPos.y });
+                            newPoints.push({ x: drawX, y: drawY });
                         } else {
-                            newPoints[1] = { x: canvasPos.x, y: canvasPos.y };
+                            newPoints[1] = { x: drawX, y: drawY };
                         }
                         return { ...line, points: newPoints };
                     } else {
@@ -993,7 +1282,7 @@
                             ...line,
                             points: [
                                 ...line.points,
-                                { x: canvasPos.x, y: canvasPos.y },
+                                { x: drawX, y: drawY },
                             ],
                         };
                     }
@@ -1028,24 +1317,24 @@
         } else if (isResizing && boardData.selectedLineIds.length === 1) {
             const dx = (screenX - startX) / boardData.zoom;
             const dy = (screenY - startY) / boardData.zoom;
-            
+
             let newMinX = resizeOriginalBB.minX;
             let newMinY = resizeOriginalBB.minY;
             let newMaxX = resizeOriginalBB.maxX;
             let newMaxY = resizeOriginalBB.maxY;
 
-            if (activeResizeHandle.includes('w')) newMinX += dx;
-            if (activeResizeHandle.includes('e')) newMaxX += dx;
-            if (activeResizeHandle.includes('n')) newMinY += dy;
-            if (activeResizeHandle.includes('s')) newMaxY += dy;
+            if (activeResizeHandle.includes("w")) newMinX += dx;
+            if (activeResizeHandle.includes("e")) newMaxX += dx;
+            if (activeResizeHandle.includes("n")) newMinY += dy;
+            if (activeResizeHandle.includes("s")) newMaxY += dy;
 
             // Запобігаємо вивертанню навиворіт (від'ємному розміру)
             if (newMinX > newMaxX - 1) {
-                if (activeResizeHandle.includes('w')) newMinX = newMaxX - 1;
+                if (activeResizeHandle.includes("w")) newMinX = newMaxX - 1;
                 else newMaxX = newMinX + 1;
             }
             if (newMinY > newMaxY - 1) {
-                if (activeResizeHandle.includes('n')) newMinY = newMaxY - 1;
+                if (activeResizeHandle.includes("n")) newMinY = newMaxY - 1;
                 else newMaxY = newMinY + 1;
             }
 
@@ -1060,19 +1349,36 @@
             boardData.lines = boardData.lines.map((line) => {
                 if (line.id === boardData.selectedLineIds[0]) {
                     const scaledLine = { ...resizeOriginalLine };
-                    
-                    if (scaledLine.tool === 'text') {
-                        scaledLine.points = [{
-                            x: newMinX + (resizeOriginalLine.points[0].x - resizeOriginalBB.minX) * scaleX,
-                            y: newMinY + (resizeOriginalLine.points[0].y - resizeOriginalBB.minY) * scaleY
-                        }];
-                        scaledLine.fontSize = (resizeOriginalLine.fontSize || 24) * scaleY;
+
+                    if (scaledLine.tool === "text") {
+                        scaledLine.points = [
+                            {
+                                x:
+                                    newMinX +
+                                    (resizeOriginalLine.points[0].x -
+                                        resizeOriginalBB.minX) *
+                                        scaleX,
+                                y:
+                                    newMinY +
+                                    (resizeOriginalLine.points[0].y -
+                                        resizeOriginalBB.minY) *
+                                        scaleY,
+                            },
+                        ];
+                        scaledLine.fontSize =
+                            (resizeOriginalLine.fontSize || 24) * scaleY;
                         if (scaledLine.fontSize < 5) scaledLine.fontSize = 5;
                     } else {
-                        scaledLine.points = resizeOriginalLine.points.map(p => ({
-                            x: newMinX + (p.x - resizeOriginalBB.minX) * scaleX,
-                            y: newMinY + (p.y - resizeOriginalBB.minY) * scaleY
-                        }));
+                        scaledLine.points = resizeOriginalLine.points.map(
+                            (p) => ({
+                                x:
+                                    newMinX +
+                                    (p.x - resizeOriginalBB.minX) * scaleX,
+                                y:
+                                    newMinY +
+                                    (p.y - resizeOriginalBB.minY) * scaleY,
+                            }),
+                        );
                     }
                     return scaledLine;
                 }
@@ -1133,14 +1439,21 @@
 
         // Показуємо меню тільки якщо ми завершили виділення (рамкою або кліком)
         // і при цьому НЕ переміщували об'єкти (щоб меню не "стрибало" після кожного перетягування)
-        if (boardData.selectedLineIds.length > 0 && !isCopying && !textInputState.active && (wasSelecting || (wasMoving && !showMenu) || (wasResizing && !showMenu))) {
+        if (
+            boardData.selectedLineIds.length > 0 &&
+            !isCopying &&
+            !textInputState.active &&
+            (wasSelecting ||
+                (wasMoving && !showMenu) ||
+                (wasResizing && !showMenu))
+        ) {
             showMenu = true;
             menuPos = { x: e.clientX, y: e.clientY };
         }
     }
 
     function handleDblClick(e) {
-        if (brushSettings.tool !== 'select') return;
+        if (brushSettings.tool !== "select") return;
         if (textInputState.active) return;
 
         const rect = canvas.getBoundingClientRect();
@@ -1151,7 +1464,10 @@
         // Шукаємо text-об'єкт під курсором
         for (let i = boardData.lines.length - 1; i >= 0; i--) {
             const line = boardData.lines[i];
-            if (line.tool === 'text' && isPointNearLine(canvasPos.x, canvasPos.y, line)) {
+            if (
+                line.tool === "text" &&
+                isPointNearLine(canvasPos.x, canvasPos.y, line)
+            ) {
                 openTextEdit(line);
                 return;
             }
@@ -1218,8 +1534,12 @@
     bind:this={canvas}
     class={brushSettings.tool}
     class:panning={isPanning}
-    class:hovering={brushSettings.tool === 'select' && hoverLineId !== null && resizeCursor === 'default'}
-    style={brushSettings.tool === 'select' && resizeCursor !== 'default' ? `cursor: ${resizeCursor} !important;` : ''}
+    class:hovering={brushSettings.tool === "select" &&
+        hoverLineId !== null &&
+        resizeCursor === "default"}
+    style={brushSettings.tool === "select" && resizeCursor !== "default"
+        ? `cursor: ${resizeCursor} !important;`
+        : ""}
     onpointerdown={handlePointerDown}
     onpointermove={handlePointerMove}
     onpointerup={handlePointerUp}
@@ -1256,14 +1576,19 @@
 {/if}
 
 {#if showMenu && !isCopying}
-    {@const selectedLine = boardData.lines.find(l => l.id === boardData.selectedLineIds[0])}
+    {@const selectedLine = boardData.lines.find(
+        (l) => l.id === boardData.selectedLineIds[0],
+    )}
     <SelectionMenu
         x={menuPos.x}
         y={menuPos.y}
         onCopy={handleCopy}
         onDelete={handleDelete}
-        isText={boardData.selectedLineIds.length === 1 && selectedLine?.tool === 'text'}
-        onEdit={() => { if (selectedLine) openTextEdit(selectedLine); }}
+        isText={boardData.selectedLineIds.length === 1 &&
+            selectedLine?.tool === "text"}
+        onEdit={() => {
+            if (selectedLine) openTextEdit(selectedLine);
+        }}
     />
 {/if}
 
@@ -1272,9 +1597,15 @@
         bind:this={textInputRef}
         bind:value={textInputState.text}
         onblur={commitTextInput}
-        onkeydown={(e) => { 
-            if (e.key === 'Escape') { textInputState.active = false; redraw(); }
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitTextInput(); }
+        onkeydown={(e) => {
+            if (e.key === "Escape") {
+                textInputState.active = false;
+                redraw();
+            }
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                commitTextInput();
+            }
         }}
         rows="1"
         style="
@@ -1297,7 +1628,12 @@
             line-height: 1.2;
             box-shadow: 0 2px 8px rgba(0,123,255,0.15);
         "
-        oninput={(e) => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; e.target.style.width = 'auto'; e.target.style.width = Math.max(80, e.target.scrollWidth) + 'px'; }}
+        oninput={(e) => {
+            e.target.style.height = "auto";
+            e.target.style.height = e.target.scrollHeight + "px";
+            e.target.style.width = "auto";
+            e.target.style.width = Math.max(80, e.target.scrollWidth) + "px";
+        }}
     ></textarea>
 {/if}
 

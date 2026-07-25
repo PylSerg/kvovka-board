@@ -1,5 +1,5 @@
 <script>
-    import { customPanelsData, savePanelsToDB, brushSettings, boardData, undo, redo, clearAll, saveState } from "$lib";
+    import { customPanelsData, savePanelsToDB, brushSettings, boardData, undo, redo, clearAll, saveState, addRuler } from "$lib";
     import orientationVerticalIcon from "$lib/assets/orientation-vertical.png";
     import orientationHorizontalIcon from "$lib/assets/orientation-horizontal.png";
     import moveIcon from "$lib/assets/hand-cursor.png";
@@ -33,6 +33,7 @@
         { id: 'brush', label: 'Пензель', category: 'Малювання' },
         { id: 'eraser', label: 'Гумка', category: 'Малювання' },
         { id: 'text', label: 'Текст', category: 'Малювання' },
+        { id: 'ruler', label: 'Лінійка', category: 'Інструменти' },
         { id: 'colorPicker', label: 'Колір', category: 'Налаштування' },
         { id: 'strokeWidth', label: 'Товщина', category: 'Налаштування' },
         { id: 'shapePicker', label: 'Форми', category: 'Малювання' },
@@ -266,6 +267,10 @@
             {:else if toolId === 'text'}
                 <button class={brushSettings.tool === "text" ? "active" : ""} onclick={() => (brushSettings.tool = "text")} title="Текст">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+                </button>
+            {:else if toolId === 'ruler'}
+                <button onclick={addRuler} title="Додати лінійку" class="action-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><rect x="2" y="6" width="20" height="12" rx="2"></rect><line x1="6" y1="6" x2="6" y2="12"></line><line x1="10" y1="6" x2="10" y2="10"></line><line x1="14" y1="6" x2="14" y2="12"></line><line x1="18" y1="6" x2="18" y2="10"></line></svg>
                 </button>
             {:else if toolId === 'colorPicker'}
                 <ColorPicker bind:color={brushSettings.color} onChange={handleInput} onStartEdit={handleStartEdit} disabled={brushSettings.tool === "eraser"} isVertical={panel.isVertical} />

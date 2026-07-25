@@ -1,6 +1,6 @@
 <script>
     import { onMount } from "svelte";
-    import { boardData, bgSettings, saveBgSettings, saveState, deleteBoardFromDB, customPanelsData, savePanelsToDB } from "$lib";
+    import { boardData, bgSettings, saveBgSettings, saveState, deleteBoardFromDB, customPanelsData, savePanelsToDB, addRuler } from "$lib";
 
     let isOpen = $state(false);
     let isBgOpen = $state(false);
@@ -985,6 +985,32 @@
                     <circle cx="10" cy="9" r="1"></circle>
                 </svg>
                 <span>Експортувати як PDF</span>
+            </button>
+
+            <button
+                id="ruler-option"
+                class="dropdown-item"
+                onclick={() => { addRuler(); closeMenu(); }}
+            >
+                <svg
+                    class="item-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                    <line x1="6" y1="6" x2="6" y2="12"></line>
+                    <line x1="10" y1="6" x2="10" y2="10"></line>
+                    <line x1="14" y1="6" x2="14" y2="12"></line>
+                    <line x1="18" y1="6" x2="18" y2="10"></line>
+                </svg>
+                <span>Лінійка</span>
             </button>
 
             <!-- Роздільник -->

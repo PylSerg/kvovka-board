@@ -15,8 +15,32 @@ export const boardData = $state({
     offsetX: 0,
     offsetY: 0,
     pdfFrames: [],        // Фрейми для експорту в PDF: { id, x, y, width, height, isVertical, number }
-    isPdfMode: false      // Чи активний режим налаштування фреймів PDF
+    isPdfMode: false,     // Чи активний режим налаштування фреймів PDF
+    rulers: []            // Лінійки: { id, x, y, angle, lengthCm, scaleFactor }
 });
+
+export function addRuler() {
+    const screenCenterX = typeof window !== 'undefined' ? window.innerWidth / 2 : 400;
+    const screenCenterY = typeof window !== 'undefined' ? window.innerHeight / 2 : 300;
+    const canvasX = (screenCenterX - boardData.offsetX) / boardData.zoom;
+    const canvasY = (screenCenterY - boardData.offsetY) / boardData.zoom;
+
+    const newRuler = {
+        id: Date.now() + Math.random(),
+        x: canvasX - 150,
+        y: canvasY - 40,
+        angle: 0,
+        lengthCm: 10.5,
+        scaleFactor: 1.0
+    };
+    boardData.rulers = [...(boardData.rulers || []), newRuler];
+}
+
+export function deleteRuler(id) {
+    if (boardData.rulers) {
+        boardData.rulers = boardData.rulers.filter(r => r.id !== id);
+    }
+}
 
 // --- Налаштування фону дошки ---
 

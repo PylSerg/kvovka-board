@@ -1,16 +1,17 @@
 <script>
     import { onMount, onDestroy } from "svelte";
-    import { Board, Toolbar, Menu, PdfExportPanel, PdfFrameOverlay, boardData, loadBoardFromDB, saveBoardToDB, saveState, customPanelsData, loadPanelsFromDB, CustomPanel } from "$lib";
+    import { Board, Toolbar, Menu, PdfExportPanel, PdfFrameOverlay, boardData, loadBoardFromDB, saveBoardToDB, saveState, customPanelsData, loadPanelsFromDB, CustomPanel, RulerOverlay } from "$lib";
 
     let autoSaveInterval;
 
     onMount(async () => {
         try {
             const savedBoard = await loadBoardFromDB();
-            if (savedBoard && savedBoard.lines && savedBoard.lines.length > 0) {
+            if (savedBoard && ((savedBoard.lines && savedBoard.lines.length > 0) || (savedBoard.rulers && savedBoard.rulers.length > 0))) {
                 if (confirm("Знайдено збережену дошку після попереднього сеансу. Відновити її?")) {
                     saveState();
-                    boardData.lines = savedBoard.lines;
+                    boardData.lines = savedBoard.lines || [];
+                    if (Array.isArray(savedBoard.rulers)) boardData.rulers = savedBoard.rulers;
                     if (typeof savedBoard.zoom === "number") boardData.zoom = savedBoard.zoom;
                     if (typeof savedBoard.offsetX === "number") boardData.offsetX = savedBoard.offsetX;
                     if (typeof savedBoard.offsetY === "number") boardData.offsetY = savedBoard.offsetY;
@@ -40,6 +41,7 @@
                 const dataToSave = JSON.parse(JSON.stringify({
                     version: 1,
                     lines: boardData.lines,
+                    rulers: boardData.rulers,
                     zoom: boardData.zoom,
                     offsetX: boardData.offsetX,
                     offsetY: boardData.offsetY,
@@ -70,6 +72,7 @@
             {/if}
         {/each}
         <Menu />
+        <RulerOverlay />
     {:else}
         <PdfExportPanel />
         <PdfFrameOverlay />

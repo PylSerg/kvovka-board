@@ -4,6 +4,7 @@ export { default as Menu } from './Menu.svelte';
 export { default as PdfExportPanel } from './PdfExportPanel.svelte';
 export { default as PdfFrameOverlay } from './PdfFrameOverlay.svelte';
 export { default as CustomPanel } from './CustomPanel.svelte';
-export { brushSettings, boardData, bgSettings, saveBgSettings, customPanelsData } from './store.svelte.js';
+export { default as RulerOverlay } from './RulerOverlay.svelte';
+export { brushSettings, boardData, bgSettings, saveBgSettings, customPanelsData, addRuler, deleteRuler } from './store.svelte.js';
 export { saveState, undo, redo, clearAll } from './history.svelte.js';
 export { saveBoardToDB, loadBoardFromDB, deleteBoardFromDB, savePanelsToDB, loadPanelsFromDB } from './idb.js';
