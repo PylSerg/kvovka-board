@@ -7,6 +7,7 @@ export { default as CustomPanel } from './CustomPanel.svelte';
 export { default as RulerOverlay } from './RulerOverlay.svelte';
 export { default as SetSquareOverlay } from './SetSquareOverlay.svelte';
 export { default as ProtractorOverlay } from './ProtractorOverlay.svelte';
-export { brushSettings, boardData, bgSettings, saveBgSettings, customPanelsData, addRuler, deleteRuler, addSetSquare, deleteSetSquare, toggleFlipXSetSquare, toggleFlipYSetSquare, addProtractor, deleteProtractor, toggleFlipYProtractor } from './store.svelte.js';
+export { default as CompassOverlay } from './CompassOverlay.svelte';
+export { brushSettings, boardData, bgSettings, saveBgSettings, customPanelsData, addRuler, deleteRuler, addSetSquare, deleteSetSquare, toggleFlipXSetSquare, toggleFlipYSetSquare, addProtractor, deleteProtractor, toggleFlipYProtractor, addCompass, deleteCompass } from './store.svelte.js';
 export { saveState, undo, redo, clearAll } from './history.svelte.js';
 export { saveBoardToDB, loadBoardFromDB, deleteBoardFromDB, savePanelsToDB, loadPanelsFromDB } from './idb.js';

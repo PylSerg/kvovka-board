@@ -18,8 +18,32 @@ export const boardData = $state({
     isPdfMode: false,     // Чи активний режим налаштування фреймів PDF
     rulers: [],           // Лінійки: { id, x, y, angle, lengthCm, scaleFactor }
     setSquares: [],       // Косинці: { id, x, y, angle, legCm, scaleFactor, flipX, flipY }
-    protractors: []       // Транспортири: { id, x, y, angle, radiusCm, scaleFactor, flipY }
+    protractors: [],      // Транспортири: { id, x, y, angle, radiusCm, scaleFactor, flipY }
+    compasses: []         // Циркулі: { id, x, y, angle, radiusCm, scaleFactor }
 });
+
+export function addCompass() {
+    const screenCenterX = typeof window !== 'undefined' ? window.innerWidth / 2 : 400;
+    const screenCenterY = typeof window !== 'undefined' ? window.innerHeight / 2 : 300;
+    const canvasX = (screenCenterX - boardData.offsetX) / boardData.zoom;
+    const canvasY = (screenCenterY - boardData.offsetY) / boardData.zoom;
+
+    const newCompass = {
+        id: Date.now() + Math.random(),
+        x: canvasX,
+        y: canvasY,
+        angle: 0,
+        radiusCm: 5.0,
+        scaleFactor: 1.0
+    };
+    boardData.compasses = [...(boardData.compasses || []), newCompass];
+}
+
+export function deleteCompass(id) {
+    if (boardData.compasses) {
+        boardData.compasses = boardData.compasses.filter(c => c.id !== id);
+    }
+}
 
 export function addRuler() {
     const screenCenterX = typeof window !== 'undefined' ? window.innerWidth / 2 : 400;

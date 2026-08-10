@@ -417,12 +417,13 @@
             ctx.restore();
         }
 
-        // 7. Індикатор прилипання до лінійки, косинця та транспортира
+        // 7. Індикатор прилипання до лінійки, косинця, транспортира та циркуля
         if (
             showCursor &&
             ((boardData.rulers && boardData.rulers.length > 0) ||
                 (boardData.setSquares && boardData.setSquares.length > 0) ||
-                (boardData.protractors && boardData.protractors.length > 0)) &&
+                (boardData.protractors && boardData.protractors.length > 0) ||
+                (boardData.compasses && boardData.compasses.length > 0)) &&
             (brushSettings.tool === "brush" ||
                 brushSettings.tool === "eraser" ||
                 brushSettings.tool === "shape")
@@ -827,12 +828,13 @@
         );
     }
 
-    // Прилипання до краю лінійки, косинця та транспортира (повертає снапнуту точку або оригінальну)
+    // Прилипання до краю лінійки, косинця, транспортира та циркуля (повертає снапнуту точку або оригінальну)
     function snapToRuler(canvasX, canvasY) {
         const hasRulers = boardData.rulers && boardData.rulers.length > 0;
         const hasSetSquares = boardData.setSquares && boardData.setSquares.length > 0;
         const hasProtractors = boardData.protractors && boardData.protractors.length > 0;
-        if (!hasRulers && !hasSetSquares && !hasProtractors) {
+        const hasCompasses = boardData.compasses && boardData.compasses.length > 0;
+        if (!hasRulers && !hasSetSquares && !hasProtractors && !hasCompasses) {
             return { x: canvasX, y: canvasY, isSnapped: false };
         }
 
@@ -997,6 +999,39 @@
                             isSnapped: true,
                         };
                     }
+                }
+            }
+        }
+
+        if (hasCompasses) {
+            for (const compass of boardData.compasses) {
+                const mmPx = (bgSettings.scale / 5) * (compass.scaleFactor || 1.0);
+                const radiusPx = compass.radiusCm * 10 * mmPx;
+
+                const dx = canvasX - compass.x;
+                const dy = canvasY - compass.y;
+                const distToCenter = Math.hypot(dx, dy);
+
+                // Snap to needle center point
+                if (distToCenter < minDist && distToCenter < 18 / boardData.zoom) {
+                    minDist = distToCenter;
+                    bestSnap = {
+                        x: compass.x,
+                        y: compass.y,
+                        isSnapped: true,
+                    };
+                }
+
+                // Snap to circle perimeter arc
+                const distToArc = Math.abs(distToCenter - radiusPx);
+                if (distToArc < minDist && distToCenter > 5) {
+                    minDist = distToArc;
+                    const angle = Math.atan2(dy, dx);
+                    bestSnap = {
+                        x: compass.x + radiusPx * Math.cos(angle),
+                        y: compass.y + radiusPx * Math.sin(angle),
+                        isSnapped: true,
+                    };
                 }
             }
         }

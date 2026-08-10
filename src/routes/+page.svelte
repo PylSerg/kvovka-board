@@ -1,19 +1,20 @@
 <script>
     import { onMount, onDestroy } from "svelte";
-    import { Board, Toolbar, Menu, PdfExportPanel, PdfFrameOverlay, boardData, loadBoardFromDB, saveBoardToDB, saveState, customPanelsData, loadPanelsFromDB, CustomPanel, RulerOverlay, SetSquareOverlay, ProtractorOverlay } from "$lib";
+    import { Board, Toolbar, Menu, PdfExportPanel, PdfFrameOverlay, boardData, loadBoardFromDB, saveBoardToDB, saveState, customPanelsData, loadPanelsFromDB, CustomPanel, RulerOverlay, SetSquareOverlay, ProtractorOverlay, CompassOverlay } from "$lib";
 
     let autoSaveInterval;
 
     onMount(async () => {
         try {
             const savedBoard = await loadBoardFromDB();
-            if (savedBoard && ((savedBoard.lines && savedBoard.lines.length > 0) || (savedBoard.rulers && savedBoard.rulers.length > 0) || (savedBoard.setSquares && savedBoard.setSquares.length > 0) || (savedBoard.protractors && savedBoard.protractors.length > 0))) {
+            if (savedBoard && ((savedBoard.lines && savedBoard.lines.length > 0) || (savedBoard.rulers && savedBoard.rulers.length > 0) || (savedBoard.setSquares && savedBoard.setSquares.length > 0) || (savedBoard.protractors && savedBoard.protractors.length > 0) || (savedBoard.compasses && savedBoard.compasses.length > 0))) {
                 if (confirm("Знайдено збережену дошку після попереднього сеансу. Відновити її?")) {
                     saveState();
                     boardData.lines = savedBoard.lines || [];
                     if (Array.isArray(savedBoard.rulers)) boardData.rulers = savedBoard.rulers;
                     if (Array.isArray(savedBoard.setSquares)) boardData.setSquares = savedBoard.setSquares;
                     if (Array.isArray(savedBoard.protractors)) boardData.protractors = savedBoard.protractors;
+                    if (Array.isArray(savedBoard.compasses)) boardData.compasses = savedBoard.compasses;
                     if (typeof savedBoard.zoom === "number") boardData.zoom = savedBoard.zoom;
                     if (typeof savedBoard.offsetX === "number") boardData.offsetX = savedBoard.offsetX;
                     if (typeof savedBoard.offsetY === "number") boardData.offsetY = savedBoard.offsetY;
@@ -46,6 +47,7 @@
                     rulers: boardData.rulers,
                     setSquares: boardData.setSquares,
                     protractors: boardData.protractors,
+                    compasses: boardData.compasses,
                     zoom: boardData.zoom,
                     offsetX: boardData.offsetX,
                     offsetY: boardData.offsetY,
@@ -79,6 +81,7 @@
         <RulerOverlay />
         <SetSquareOverlay />
         <ProtractorOverlay />
+        <CompassOverlay />
     {:else}
         <PdfExportPanel />
         <PdfFrameOverlay />

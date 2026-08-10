@@ -1,5 +1,5 @@
 <script>
-    import { customPanelsData, savePanelsToDB, brushSettings, boardData, undo, redo, clearAll, saveState, addRuler, addSetSquare, addProtractor } from "$lib";
+    import { customPanelsData, savePanelsToDB, brushSettings, boardData, undo, redo, clearAll, saveState, addRuler, addSetSquare, addProtractor, addCompass } from "$lib";
     import orientationVerticalIcon from "$lib/assets/orientation-vertical.png";
     import orientationHorizontalIcon from "$lib/assets/orientation-horizontal.png";
     import moveIcon from "$lib/assets/hand-cursor.png";
@@ -36,6 +36,7 @@
         { id: 'ruler', label: 'Лінійка', category: 'Інструменти' },
         { id: 'setSquare', label: 'Косинець', category: 'Інструменти' },
         { id: 'protractor', label: 'Транспортир', category: 'Інструменти' },
+        { id: 'compass', label: 'Циркуль', category: 'Інструменти' },
         { id: 'colorPicker', label: 'Колір', category: 'Налаштування' },
         { id: 'strokeWidth', label: 'Товщина', category: 'Налаштування' },
         { id: 'shapePicker', label: 'Форми', category: 'Малювання' },
@@ -281,6 +282,10 @@
             {:else if toolId === 'protractor'}
                 <button onclick={addProtractor} title="Додати транспортир" class="action-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><path d="M 3 19 A 9 9 0 0 1 21 19 Z"></path><line x1="12" y1="19" x2="12" y2="16"></line><line x1="6.3" y1="13.3" x2="8.4" y2="14.8"></line><line x1="17.7" y1="13.3" x2="15.6" y2="14.8"></line></svg>
+                </button>
+            {:else if toolId === 'compass'}
+                <button onclick={addCompass} title="Додати циркуль" class="action-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><path d="M12 2v4"></path><circle cx="12" cy="7" r="2"></circle><path d="M10.5 8.5 L5 21"></path><path d="M13.5 8.5 L19 21"></path><circle cx="5" cy="21" r="1" fill="currentColor"></circle></svg>
                 </button>
             {:else if toolId === 'colorPicker'}
                 <ColorPicker bind:color={brushSettings.color} onChange={handleInput} onStartEdit={handleStartEdit} disabled={brushSettings.tool === "eraser"} isVertical={panel.isVertical} />

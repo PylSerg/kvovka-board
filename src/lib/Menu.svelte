@@ -1,6 +1,6 @@
 <script>
     import { onMount } from "svelte";
-    import { boardData, bgSettings, saveBgSettings, saveState, deleteBoardFromDB, customPanelsData, savePanelsToDB, addRuler, addSetSquare, addProtractor } from "$lib";
+    import { boardData, bgSettings, saveBgSettings, saveState, deleteBoardFromDB, customPanelsData, savePanelsToDB, addRuler, addSetSquare, addProtractor, addCompass } from "$lib";
 
     let isOpen = $state(false);
     let isBgOpen = $state(false);
@@ -1064,6 +1064,33 @@
                     <line x1="17.7" y1="13.3" x2="15.6" y2="14.8"></line>
                 </svg>
                 <span>Транспортир</span>
+            </button>
+
+            <button
+                id="compass-option"
+                class="dropdown-item"
+                onclick={() => { addCompass(); closeMenu(); }}
+            >
+                <svg
+                    class="item-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="M12 2v4"></path>
+                    <circle cx="12" cy="7" r="2"></circle>
+                    <path d="M10.5 8.5 L5 21"></path>
+                    <path d="M13.5 8.5 L19 21"></path>
+                    <circle cx="5" cy="21" r="1" fill="currentColor"></circle>
+                    <path d="M 8 15 Q 12 13 16 15" stroke-dasharray="2 2"></path>
+                </svg>
+                <span>Циркуль</span>
             </button>
 
             <!-- Роздільник -->
