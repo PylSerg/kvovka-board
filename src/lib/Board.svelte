@@ -417,11 +417,11 @@
             ctx.restore();
         }
 
-        // 7. Індикатор прилипання до лінійки
+        // 7. Індикатор прилипання до лінійки та косинця
         if (
             showCursor &&
-            boardData.rulers &&
-            boardData.rulers.length > 0 &&
+            ((boardData.rulers && boardData.rulers.length > 0) ||
+                (boardData.setSquares && boardData.setSquares.length > 0)) &&
             (brushSettings.tool === "brush" ||
                 brushSettings.tool === "eraser" ||
                 brushSettings.tool === "shape")
@@ -826,6 +826,151 @@
         );
     }
 
+    // Прилипання до краю лінійки та косинця (повертає снапнуту точку або оригінальну)
+    function snapToRuler(canvasX, canvasY) {
+        const hasRulers = boardData.rulers && boardData.rulers.length > 0;
+        const hasSetSquares = boardData.setSquares && boardData.setSquares.length > 0;
+        if (!hasRulers && !hasSetSquares) {
+            return { x: canvasX, y: canvasY, isSnapped: false };
+        }
+
+        const snapThreshold = 20 / boardData.zoom;
+        let bestSnap = null;
+        let minDist = snapThreshold;
+
+        if (hasRulers) {
+            for (const ruler of boardData.rulers) {
+                // Canvas width of ruler in canvas pixels
+                const mmPx = (bgSettings.scale / 5) * (ruler.scaleFactor || 1.0);
+                const totalWidth = ruler.lengthCm * 10 * mmPx;
+                const rulerHeightPx = 60;
+
+                // Transform point into ruler's local space (rotate by -angle)
+                const dx = canvasX - ruler.x;
+                const dy = canvasY - ruler.y;
+                const rad = (ruler.angle * Math.PI) / 180;
+                const cosA = Math.cos(rad);
+                const sinA = Math.sin(rad);
+
+                // Local coords (x along ruler, y perpendicular)
+                const lx = dx * cosA + dy * sinA;
+                const ly = -dx * sinA + dy * cosA;
+
+                // Only consider if within ruler length bounds (with small margin)
+                const margin = 8 / boardData.zoom;
+                if (lx >= -margin && lx <= totalWidth + margin) {
+                    const clampedLx = Math.max(0, Math.min(totalWidth, lx));
+
+                    // Top edge: ly ≈ 0
+                    const distTop = Math.abs(ly);
+                    if (distTop < minDist) {
+                        minDist = distTop;
+                        // Back-transform snapped point to canvas coords
+                        bestSnap = {
+                            x: ruler.x + clampedLx * cosA,
+                            y: ruler.y + clampedLx * sinA,
+                            isSnapped: true,
+                        };
+                    }
+
+                    // Bottom edge: ly ≈ rulerHeightPx
+                    const distBottom = Math.abs(ly - rulerHeightPx);
+                    if (distBottom < minDist) {
+                        minDist = distBottom;
+                        bestSnap = {
+                            x: ruler.x + clampedLx * cosA - rulerHeightPx * sinA,
+                            y: ruler.y + clampedLx * sinA + rulerHeightPx * cosA,
+                            isSnapped: true,
+                        };
+                    }
+                }
+            }
+        }
+
+        if (hasSetSquares) {
+            for (const setSquare of boardData.setSquares) {
+                const sx = setSquare.flipX ? -1 : 1;
+                const sy = setSquare.flipY ? -1 : 1;
+                const mmPx = (bgSettings.scale / 5) * (setSquare.scaleFactor || 1.0);
+                const legPx = setSquare.legCm * 10 * mmPx;
+                const margin = 8 / boardData.zoom;
+
+                const rad = (setSquare.angle * Math.PI) / 180;
+                const cosA = Math.cos(rad);
+                const sinA = Math.sin(rad);
+
+                // (setSquare.x, setSquare.y) is the SVG body top-left (container CSS origin).
+                // The right-angle corner is at CSS (originX, originY) within the container.
+                // After rotation by angle around CSS (0,0), the right-angle corner's canvas
+                // position is the container origin + rotate(originVec, angle):
+                const originX = -Math.min(0, sx * legPx) + 30;
+                const originY = -Math.min(0, -sy * legPx) + 30;
+                const rightAngleX = setSquare.x + originX * cosA - originY * sinA;
+                const rightAngleY = setSquare.y + originX * sinA + originY * cosA;
+
+                // Transform cursor into local space relative to the right-angle corner
+                const dx = canvasX - rightAngleX;
+                const dy = canvasY - rightAngleY;
+                const lx = dx * cosA + dy * sinA;
+                const ly = -dx * sinA + dy * cosA;
+
+                // Leg 1 (Horizontal: Y = 0, X between 0 and sx * legPx)
+                const u1 = lx / sx;
+                if (u1 >= -margin && u1 <= legPx + margin) {
+                    const clampedU1 = Math.max(0, Math.min(legPx, u1));
+                    const distLeg1 = Math.abs(ly);
+                    if (distLeg1 < minDist) {
+                        minDist = distLeg1;
+                        const lxSnap = sx * clampedU1;
+                        const lySnap = 0;
+                        bestSnap = {
+                            x: rightAngleX + lxSnap * cosA - lySnap * sinA,
+                            y: rightAngleY + lxSnap * sinA + lySnap * cosA,
+                            isSnapped: true,
+                        };
+                    }
+                }
+
+                // Leg 2 (Vertical: X = 0, Y between 0 and -sy * legPx)
+                const u2 = ly / (-sy);
+                if (u2 >= -margin && u2 <= legPx + margin) {
+                    const clampedU2 = Math.max(0, Math.min(legPx, u2));
+                    const distLeg2 = Math.abs(lx);
+                    if (distLeg2 < minDist) {
+                        minDist = distLeg2;
+                        const lxSnap = 0;
+                        const lySnap = -sy * clampedU2;
+                        bestSnap = {
+                            x: rightAngleX + lxSnap * cosA - lySnap * sinA,
+                            y: rightAngleY + lxSnap * sinA + lySnap * cosA,
+                            isSnapped: true,
+                        };
+                    }
+                }
+
+                // Hypotenuse: connects (sx * legPx, 0) to (0, -sy * legPx)
+                const hypLength = legPx * Math.SQRT2;
+                const distHyp = Math.abs(sy * lx - sx * ly - sx * sy * legPx) / Math.SQRT2;
+                const t = (legPx - sx * lx - sy * ly) / Math.SQRT2;
+                if (t >= -margin && t <= hypLength + margin) {
+                    if (distHyp < minDist) {
+                        minDist = distHyp;
+                        const clampedT = Math.max(0, Math.min(hypLength, t));
+                        const lxSnap = sx * legPx - (clampedT * sx) / Math.SQRT2;
+                        const lySnap = (-clampedT * sy) / Math.SQRT2;
+                        bestSnap = {
+                            x: rightAngleX + lxSnap * cosA - lySnap * sinA,
+                            y: rightAngleY + lxSnap * sinA + lySnap * cosA,
+                            isSnapped: true,
+                        };
+                    }
+                }
+            }
+        }
+
+        return bestSnap ?? { x: canvasX, y: canvasY, isSnapped: false };
+    }
+
     // Математика кліку мишкою по лінії (для поодинокого виділення)
     function isPointNearLine(px, py, line) {
         if (line.tool === "shape" || line.tool === "text") {
@@ -867,66 +1012,6 @@
                 return true;
         }
         return false;
-    }
-
-    // Прилипання до краю лінійки (повертає снапнуту точку або оригінальну)
-    function snapToRuler(canvasX, canvasY) {
-        if (!boardData.rulers || boardData.rulers.length === 0) {
-            return { x: canvasX, y: canvasY, isSnapped: false };
-        }
-
-        const snapThreshold = 20 / boardData.zoom;
-        let bestSnap = null;
-        let minDist = snapThreshold;
-
-        for (const ruler of boardData.rulers) {
-            // Canvas width of ruler in canvas pixels
-            const mmPx = (bgSettings.scale / 5) * (ruler.scaleFactor || 1.0);
-            const totalWidth = ruler.lengthCm * 10 * mmPx;
-            const rulerHeightPx = 60;
-
-            // Transform point into ruler's local space (rotate by -angle)
-            const dx = canvasX - ruler.x;
-            const dy = canvasY - ruler.y;
-            const rad = (ruler.angle * Math.PI) / 180;
-            const cosA = Math.cos(rad);
-            const sinA = Math.sin(rad);
-
-            // Local coords (x along ruler, y perpendicular)
-            const lx = dx * cosA + dy * sinA;
-            const ly = -dx * sinA + dy * cosA;
-
-            // Only consider if within ruler length bounds (with small margin)
-            const margin = 8 / boardData.zoom;
-            if (lx >= -margin && lx <= totalWidth + margin) {
-                const clampedLx = Math.max(0, Math.min(totalWidth, lx));
-
-                // Top edge: ly ≈ 0
-                const distTop = Math.abs(ly);
-                if (distTop < minDist) {
-                    minDist = distTop;
-                    // Back-transform snapped point to canvas coords
-                    bestSnap = {
-                        x: ruler.x + clampedLx * cosA,
-                        y: ruler.y + clampedLx * sinA,
-                        isSnapped: true,
-                    };
-                }
-
-                // Bottom edge: ly ≈ rulerHeightPx
-                const distBottom = Math.abs(ly - rulerHeightPx);
-                if (distBottom < minDist) {
-                    minDist = distBottom;
-                    bestSnap = {
-                        x: ruler.x + clampedLx * cosA - rulerHeightPx * sinA,
-                        y: ruler.y + clampedLx * sinA + rulerHeightPx * cosA,
-                        isSnapped: true,
-                    };
-                }
-            }
-        }
-
-        return bestSnap ?? { x: canvasX, y: canvasY, isSnapped: false };
     }
 
     function handlePointerDown(e) {

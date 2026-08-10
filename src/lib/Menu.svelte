@@ -1,6 +1,6 @@
 <script>
     import { onMount } from "svelte";
-    import { boardData, bgSettings, saveBgSettings, saveState, deleteBoardFromDB, customPanelsData, savePanelsToDB, addRuler } from "$lib";
+    import { boardData, bgSettings, saveBgSettings, saveState, deleteBoardFromDB, customPanelsData, savePanelsToDB, addRuler, addSetSquare } from "$lib";
 
     let isOpen = $state(false);
     let isBgOpen = $state(false);
@@ -1011,6 +1011,34 @@
                     <line x1="18" y1="6" x2="18" y2="10"></line>
                 </svg>
                 <span>Лінійка</span>
+            </button>
+
+            <button
+                id="setsquare-option"
+                class="dropdown-item"
+                onclick={() => { addSetSquare(); closeMenu(); }}
+            >
+                <svg
+                    class="item-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <polygon points="3,3 21,21 3,21"></polygon>
+                    <line x1="7" y1="21" x2="7" y2="18"></line>
+                    <line x1="11" y1="21" x2="11" y2="18"></line>
+                    <line x1="15" y1="21" x2="15" y2="18"></line>
+                    <line x1="3" y1="17" x2="6" y2="17"></line>
+                    <line x1="3" y1="13" x2="6" y2="13"></line>
+                    <line x1="3" y1="9" x2="6" y2="9"></line>
+                </svg>
+                <span>Косинець</span>
             </button>
 
             <!-- Роздільник -->

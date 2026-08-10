@@ -16,7 +16,8 @@ export const boardData = $state({
     offsetY: 0,
     pdfFrames: [],        // Фрейми для експорту в PDF: { id, x, y, width, height, isVertical, number }
     isPdfMode: false,     // Чи активний режим налаштування фреймів PDF
-    rulers: []            // Лінійки: { id, x, y, angle, lengthCm, scaleFactor }
+    rulers: [],           // Лінійки: { id, x, y, angle, lengthCm, scaleFactor }
+    setSquares: []        // Косинці: { id, x, y, angle, legCm, scaleFactor }
 });
 
 export function addRuler() {
@@ -39,6 +40,66 @@ export function addRuler() {
 export function deleteRuler(id) {
     if (boardData.rulers) {
         boardData.rulers = boardData.rulers.filter(r => r.id !== id);
+    }
+}
+
+export function addSetSquare() {
+    const screenCenterX = typeof window !== 'undefined' ? window.innerWidth / 2 : 400;
+    const screenCenterY = typeof window !== 'undefined' ? window.innerHeight / 2 : 300;
+    const canvasX = (screenCenterX - boardData.offsetX) / boardData.zoom;
+    const canvasY = (screenCenterY - boardData.offsetY) / boardData.zoom;
+
+    // Default parameters
+    const legCm = 5.5;
+    const scaleFactor = 1.0;
+    const mmPx = (bgSettings.scale / 5) * scaleFactor;
+    const legPx = legCm * 10 * mmPx;
+
+    // The SVG viewBox starts at (minX, minY) = (-30, -legPx-30) relative to the
+    // right-angle corner. So (setSquare.x, setSquare.y) is the SVG body top-left
+    // (container CSS origin), and the right-angle corner lives at offset:
+    //   originX = -minX = 30
+    //   originY = -minY = legPx + 30
+    // To place the right-angle corner at screen center, subtract the offset:
+    const originX = 30;          // for default flipX=false (sx=1)
+    const originY = legPx + 30;  // for default flipY=false (sy=1)
+
+    const newSetSquare = {
+        id: Date.now() + Math.random(),
+        x: canvasX - originX,
+        y: canvasY - originY,
+        angle: 0,
+        legCm,
+        scaleFactor,
+        flipX: false,
+        flipY: false
+    };
+    boardData.setSquares = [...(boardData.setSquares || []), newSetSquare];
+}
+
+export function deleteSetSquare(id) {
+    if (boardData.setSquares) {
+        boardData.setSquares = boardData.setSquares.filter(s => s.id !== id);
+    }
+}
+
+export function toggleFlipXSetSquare(id) {
+    if (boardData.setSquares) {
+        const sq = boardData.setSquares.find(s => s.id === id);
+        if (sq) {
+            sq.flipX = !sq.flipX;
+            boardData.setSquares = [...boardData.setSquares];
+        }
+    }
+}
+
+export function toggleFlipYSetSquare(id) {
+    if (boardData.setSquares) {
+        const sq = boardData.setSquares.find(s => s.id === id);
+        if (sq) {
+            sq.flipY = !sq.flipY;
+            boardData.setSquares = [...boardData.setSquares];
+        }
     }
 }
 

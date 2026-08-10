@@ -1,5 +1,5 @@
 <script>
-    import { customPanelsData, savePanelsToDB, brushSettings, boardData, undo, redo, clearAll, saveState, addRuler } from "$lib";
+    import { customPanelsData, savePanelsToDB, brushSettings, boardData, undo, redo, clearAll, saveState, addRuler, addSetSquare } from "$lib";
     import orientationVerticalIcon from "$lib/assets/orientation-vertical.png";
     import orientationHorizontalIcon from "$lib/assets/orientation-horizontal.png";
     import moveIcon from "$lib/assets/hand-cursor.png";
@@ -34,6 +34,7 @@
         { id: 'eraser', label: 'Гумка', category: 'Малювання' },
         { id: 'text', label: 'Текст', category: 'Малювання' },
         { id: 'ruler', label: 'Лінійка', category: 'Інструменти' },
+        { id: 'setSquare', label: 'Косинець', category: 'Інструменти' },
         { id: 'colorPicker', label: 'Колір', category: 'Налаштування' },
         { id: 'strokeWidth', label: 'Товщина', category: 'Налаштування' },
         { id: 'shapePicker', label: 'Форми', category: 'Малювання' },
@@ -271,6 +272,10 @@
             {:else if toolId === 'ruler'}
                 <button onclick={addRuler} title="Додати лінійку" class="action-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><rect x="2" y="6" width="20" height="12" rx="2"></rect><line x1="6" y1="6" x2="6" y2="12"></line><line x1="10" y1="6" x2="10" y2="10"></line><line x1="14" y1="6" x2="14" y2="12"></line><line x1="18" y1="6" x2="18" y2="10"></line></svg>
+                </button>
+            {:else if toolId === 'setSquare'}
+                <button onclick={addSetSquare} title="Додати косинець" class="action-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><polygon points="3,3 21,21 3,21"></polygon><line x1="7" y1="21" x2="7" y2="18"></line><line x1="11" y1="21" x2="11" y2="18"></line><line x1="15" y1="21" x2="15" y2="18"></line><line x1="3" y1="17" x2="6" y2="17"></line><line x1="3" y1="13" x2="6" y2="13"></line><line x1="3" y1="9" x2="6" y2="9"></line></svg>
                 </button>
             {:else if toolId === 'colorPicker'}
                 <ColorPicker bind:color={brushSettings.color} onChange={handleInput} onStartEdit={handleStartEdit} disabled={brushSettings.tool === "eraser"} isVertical={panel.isVertical} />
