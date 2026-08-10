@@ -1,6 +1,6 @@
 <script>
     import { onMount } from "svelte";
-    import { boardData, bgSettings, saveBgSettings, saveState, deleteBoardFromDB, customPanelsData, savePanelsToDB, addRuler, addSetSquare } from "$lib";
+    import { boardData, bgSettings, saveBgSettings, saveState, deleteBoardFromDB, customPanelsData, savePanelsToDB, addRuler, addSetSquare, addProtractor } from "$lib";
 
     let isOpen = $state(false);
     let isBgOpen = $state(false);
@@ -1039,6 +1039,31 @@
                     <line x1="3" y1="9" x2="6" y2="9"></line>
                 </svg>
                 <span>Косинець</span>
+            </button>
+
+            <button
+                id="protractor-option"
+                class="dropdown-item"
+                onclick={() => { addProtractor(); closeMenu(); }}
+            >
+                <svg
+                    class="item-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="M 3 19 A 9 9 0 0 1 21 19 Z"></path>
+                    <line x1="12" y1="19" x2="12" y2="16"></line>
+                    <line x1="6.3" y1="13.3" x2="8.4" y2="14.8"></line>
+                    <line x1="17.7" y1="13.3" x2="15.6" y2="14.8"></line>
+                </svg>
+                <span>Транспортир</span>
             </button>
 
             <!-- Роздільник -->

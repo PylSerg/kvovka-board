@@ -17,7 +17,8 @@ export const boardData = $state({
     pdfFrames: [],        // Фрейми для експорту в PDF: { id, x, y, width, height, isVertical, number }
     isPdfMode: false,     // Чи активний режим налаштування фреймів PDF
     rulers: [],           // Лінійки: { id, x, y, angle, lengthCm, scaleFactor }
-    setSquares: []        // Косинці: { id, x, y, angle, legCm, scaleFactor }
+    setSquares: [],       // Косинці: { id, x, y, angle, legCm, scaleFactor, flipX, flipY }
+    protractors: []       // Транспортири: { id, x, y, angle, radiusCm, scaleFactor, flipY }
 });
 
 export function addRuler() {
@@ -99,6 +100,40 @@ export function toggleFlipYSetSquare(id) {
         if (sq) {
             sq.flipY = !sq.flipY;
             boardData.setSquares = [...boardData.setSquares];
+        }
+    }
+}
+
+export function addProtractor() {
+    const screenCenterX = typeof window !== 'undefined' ? window.innerWidth / 2 : 400;
+    const screenCenterY = typeof window !== 'undefined' ? window.innerHeight / 2 : 300;
+    const canvasX = (screenCenterX - boardData.offsetX) / boardData.zoom;
+    const canvasY = (screenCenterY - boardData.offsetY) / boardData.zoom;
+
+    const newProtractor = {
+        id: Date.now() + Math.random(),
+        x: canvasX,
+        y: canvasY,
+        angle: 0,
+        radiusCm: 6.0,
+        scaleFactor: 1.0,
+        flipY: false
+    };
+    boardData.protractors = [...(boardData.protractors || []), newProtractor];
+}
+
+export function deleteProtractor(id) {
+    if (boardData.protractors) {
+        boardData.protractors = boardData.protractors.filter(p => p.id !== id);
+    }
+}
+
+export function toggleFlipYProtractor(id) {
+    if (boardData.protractors) {
+        const protractor = boardData.protractors.find(p => p.id === id);
+        if (protractor) {
+            protractor.flipY = !protractor.flipY;
+            boardData.protractors = [...boardData.protractors];
         }
     }
 }

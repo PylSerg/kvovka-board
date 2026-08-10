@@ -417,11 +417,12 @@
             ctx.restore();
         }
 
-        // 7. Індикатор прилипання до лінійки та косинця
+        // 7. Індикатор прилипання до лінійки, косинця та транспортира
         if (
             showCursor &&
             ((boardData.rulers && boardData.rulers.length > 0) ||
-                (boardData.setSquares && boardData.setSquares.length > 0)) &&
+                (boardData.setSquares && boardData.setSquares.length > 0) ||
+                (boardData.protractors && boardData.protractors.length > 0)) &&
             (brushSettings.tool === "brush" ||
                 brushSettings.tool === "eraser" ||
                 brushSettings.tool === "shape")
@@ -826,11 +827,12 @@
         );
     }
 
-    // Прилипання до краю лінійки та косинця (повертає снапнуту точку або оригінальну)
+    // Прилипання до краю лінійки, косинця та транспортира (повертає снапнуту точку або оригінальну)
     function snapToRuler(canvasX, canvasY) {
         const hasRulers = boardData.rulers && boardData.rulers.length > 0;
         const hasSetSquares = boardData.setSquares && boardData.setSquares.length > 0;
-        if (!hasRulers && !hasSetSquares) {
+        const hasProtractors = boardData.protractors && boardData.protractors.length > 0;
+        if (!hasRulers && !hasSetSquares && !hasProtractors) {
             return { x: canvasX, y: canvasY, isSnapped: false };
         }
 
@@ -961,6 +963,37 @@
                         bestSnap = {
                             x: rightAngleX + lxSnap * cosA - lySnap * sinA,
                             y: rightAngleY + lxSnap * sinA + lySnap * cosA,
+                            isSnapped: true,
+                        };
+                    }
+                }
+            }
+        }
+
+        if (hasProtractors) {
+            for (const protractor of boardData.protractors) {
+                const mmPx = (bgSettings.scale / 5) * (protractor.scaleFactor || 1.0);
+                const radiusPx = protractor.radiusCm * 10 * mmPx;
+                const margin = 8 / boardData.zoom;
+
+                const rad = (protractor.angle * Math.PI) / 180;
+                const cosA = Math.cos(rad);
+                const sinA = Math.sin(rad);
+
+                const dx = canvasX - protractor.x;
+                const dy = canvasY - protractor.y;
+
+                const lx = dx * cosA + dy * sinA;
+                const ly = -dx * sinA + dy * cosA;
+
+                if (lx >= -radiusPx - margin && lx <= radiusPx + margin) {
+                    const distBaseline = Math.abs(ly);
+                    if (distBaseline < minDist) {
+                        minDist = distBaseline;
+                        const clampedLx = Math.max(-radiusPx, Math.min(radiusPx, lx));
+                        bestSnap = {
+                            x: protractor.x + clampedLx * cosA,
+                            y: protractor.y + clampedLx * sinA,
                             isSnapped: true,
                         };
                     }
