@@ -1,5 +1,6 @@
 <script>
-    import { customPanelsData, savePanelsToDB, brushSettings, boardData, undo, redo, clearAll, saveState, addRuler, addSetSquare, addProtractor, addCompass } from "$lib";
+    import { onMount, tick } from "svelte";
+    import { customPanelsData, savePanelsToDB, brushSettings, boardData, undo, redo, clearAll, saveState, addRuler, addSetSquare, addProtractor, addCompass, addCoordLine, addCoordPlane2D, addCoordPlane3D } from "$lib";
     import orientationVerticalIcon from "$lib/assets/orientation-vertical.png";
     import orientationHorizontalIcon from "$lib/assets/orientation-horizontal.png";
     import moveIcon from "$lib/assets/hand-cursor.png";
@@ -11,6 +12,7 @@
     import zoom100Icon from "$lib/assets/zoom-100.png";
     import undoIcon from "$lib/assets/undo.png";
     import redoIcon from "$lib/assets/redo.png";
+    import clearIcon from "$lib/assets/broom.png";
     
     import ColorPicker from "./ColorPicker.svelte";
     import StrokeWidthPicker from "./StrokeWidthPicker.svelte";
@@ -23,6 +25,8 @@
     let startX = 0;
     let startY = 0;
     let isToolMenuOpen = $state(false);
+    let toolMenuContainerEl;
+    let menuPopupStyle = $state("");
     let contextMenu = $state({ isOpen: false, x: 0, y: 0, toolId: null });
 
     if (!panel.tools) panel.tools = [];
@@ -37,6 +41,9 @@
         { id: 'setSquare', label: 'Косинець', category: 'Інструменти' },
         { id: 'protractor', label: 'Транспортир', category: 'Інструменти' },
         { id: 'compass', label: 'Циркуль', category: 'Інструменти' },
+        { id: 'coordLine', label: 'Координатна пряма', category: 'Інструменти' },
+        { id: 'coordPlane2D', label: 'Координатна площина (x; y)', category: 'Інструменти' },
+        { id: 'coordPlane3D', label: 'Координатна площина (x; y; z)', category: 'Інструменти' },
         { id: 'colorPicker', label: 'Колір', category: 'Налаштування' },
         { id: 'strokeWidth', label: 'Товщина', category: 'Налаштування' },
         { id: 'shapePicker', label: 'Форми', category: 'Малювання' },
@@ -99,8 +106,53 @@
         saveSettings();
     }
 
+    onMount(() => {
+        const handleOutsideClick = (e) => {
+            if (isToolMenuOpen && toolMenuContainerEl && !toolMenuContainerEl.contains(e.target)) {
+                isToolMenuOpen = false;
+            }
+        };
+        window.addEventListener("pointerdown", handleOutsideClick);
+        return () => {
+            window.removeEventListener("pointerdown", handleOutsideClick);
+        };
+    });
+
+    async function computeMenuPopupStyle() {
+        await tick();
+        if (!toolMenuContainerEl) return;
+        const rect = toolMenuContainerEl.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        let style = "";
+        if (panel.isVertical) {
+            if (rect.left < vw / 2) {
+                style = "top: 0; bottom: auto; left: calc(100% + 10px); right: auto;";
+            } else {
+                style = "top: 0; bottom: auto; right: calc(100% + 10px); left: auto;";
+            }
+            if (rect.top + 420 > vh) {
+                style += " transform: translateY(-30%);";
+            }
+        } else {
+            if (rect.top < vh / 2) {
+                style = "top: calc(100% + 10px); bottom: auto; left: 0; right: auto;";
+            } else {
+                style = "bottom: calc(100% + 10px); top: auto; left: 0; right: auto;";
+            }
+            if (rect.left + 350 > vw) {
+                style = style.replace("left: 0; right: auto;", "right: 0; left: auto;");
+            }
+        }
+        menuPopupStyle = style;
+    }
+
     function toggleToolMenu() {
         isToolMenuOpen = !isToolMenuOpen;
+        if (isToolMenuOpen) {
+            computeMenuPopupStyle();
+        }
     }
 
     function addTool(toolId) {
@@ -200,7 +252,20 @@
 
     function exportBoard() {
         try {
-            const dataStr = JSON.stringify({ version: 1, lines: boardData.lines, zoom: boardData.zoom, offsetX: boardData.offsetX, offsetY: boardData.offsetY }, null, 2);
+            const dataStr = JSON.stringify({
+                version: 1,
+                lines: boardData.lines,
+                rulers: boardData.rulers,
+                setSquares: boardData.setSquares,
+                protractors: boardData.protractors,
+                compasses: boardData.compasses,
+                coordLines: boardData.coordLines,
+                coordPlanes2D: boardData.coordPlanes2D,
+                coordPlanes3D: boardData.coordPlanes3D,
+                zoom: boardData.zoom,
+                offsetX: boardData.offsetX,
+                offsetY: boardData.offsetY
+            }, null, 2);
             const blob = new Blob([dataStr], { type: "application/json" });
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -287,6 +352,18 @@
                 <button onclick={addCompass} title="Додати циркуль" class="action-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><path d="M12 2v4"></path><circle cx="12" cy="7" r="2"></circle><path d="M10.5 8.5 L5 21"></path><path d="M13.5 8.5 L19 21"></path><circle cx="5" cy="21" r="1" fill="currentColor"></circle></svg>
                 </button>
+            {:else if toolId === 'coordLine'}
+                <button onclick={addCoordLine} title="Додати координатну пряму" class="action-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><line x1="2" y1="12" x2="22" y2="12"></line><polyline points="17 7 22 12 17 17"></polyline><line x1="6" y1="9" x2="6" y2="15"></line><line x1="12" y1="8" x2="12" y2="16"></line><line x1="18" y1="9" x2="18" y2="15"></line></svg>
+                </button>
+            {:else if toolId === 'coordPlane2D'}
+                <button onclick={addCoordPlane2D} title="Додати координатну площину (x; y)" class="action-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><line x1="3" y1="12" x2="21" y2="12"></line><polyline points="17 8 21 12 17 16"></polyline><line x1="12" y1="21" x2="12" y2="3"></line><polyline points="8 7 12 3 16 7"></polyline><circle cx="12" cy="12" r="1.5" fill="currentColor"></circle></svg>
+                </button>
+            {:else if toolId === 'coordPlane3D'}
+                <button onclick={addCoordPlane3D} title="Додати координатну площину (x; y; z)" class="action-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><line x1="12" y1="12" x2="21" y2="12"></line><polyline points="18 9 21 12 18 15"></polyline><line x1="12" y1="12" x2="12" y2="3"></line><polyline points="9 6 12 3 15 6"></polyline><line x1="12" y1="12" x2="4" y2="20"></line><polyline points="4 16 4 20 8 20"></polyline><circle cx="12" cy="12" r="1.5" fill="currentColor"></circle></svg>
+                </button>
             {:else if toolId === 'colorPicker'}
                 <ColorPicker bind:color={brushSettings.color} onChange={handleInput} onStartEdit={handleStartEdit} disabled={brushSettings.tool === "eraser"} isVertical={panel.isVertical} />
             {:else if toolId === 'strokeWidth'}
@@ -321,18 +398,75 @@
         <hr />
     {/if}
 
-    <div style="position: relative;">
+    <div style="position: relative;" bind:this={toolMenuContainerEl}>
         <button onclick={toggleToolMenu} title="Додати інструмент" class="action-btn add-tool-btn">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
         
         {#if isToolMenuOpen}
-            <div class="tool-menu" onpointerdown={(e) => e.stopPropagation()}>
-                <div class="tool-menu-header">Додати інструмент</div>
-                <div class="tool-menu-list">
+            <div class="tool-menu" style={menuPopupStyle} onpointerdown={(e) => e.stopPropagation()}>
+                <div class="tool-menu-header">
+                    <span>Додати інструмент</span>
+                </div>
+                <div class="tool-menu-grid">
                     {#each availableTools as t}
-                        <button class="tool-menu-item" class:disabled={panel.tools.includes(t.id)} onclick={() => addTool(t.id)}>
-                            {t.label} <span class="tool-cat">({t.category})</span>
+                        <button 
+                            type="button"
+                            class="tool-grid-item" 
+                            class:disabled={panel.tools.includes(t.id)} 
+                            onclick={() => addTool(t.id)}
+                            title={panel.tools.includes(t.id) ? `${t.label} (вже додано)` : t.label}
+                        >
+                            <div class="item-icon-container">
+                                {#if t.id === 'move'}
+                                    <img src={moveIcon} alt={t.label} class="icon" />
+                                {:else if t.id === 'select'}
+                                    <img src={selectionIcon} alt={t.label} class="icon" />
+                                {:else if t.id === 'brush'}
+                                    <img src={pencilIcon} alt={t.label} class="icon" />
+                                {:else if t.id === 'eraser'}
+                                    <img src={eraserIcon} alt={t.label} class="icon" />
+                                {:else if t.id === 'text'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>
+                                {:else if t.id === 'ruler'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><rect x="2" y="6" width="20" height="12" rx="2"></rect><line x1="6" y1="6" x2="6" y2="12"></line><line x1="10" y1="6" x2="10" y2="10"></line><line x1="14" y1="6" x2="14" y2="12"></line><line x1="18" y1="6" x2="18" y2="10"></line></svg>
+                                {:else if t.id === 'setSquare'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><polygon points="3,3 21,21 3,21"></polygon><line x1="7" y1="21" x2="7" y2="18"></line><line x1="11" y1="21" x2="11" y2="18"></line><line x1="15" y1="21" x2="15" y2="18"></line><line x1="3" y1="17" x2="6" y2="17"></line><line x1="3" y1="13" x2="6" y2="13"></line><line x1="3" y1="9" x2="6" y2="9"></line></svg>
+                                {:else if t.id === 'protractor'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><path d="M 3 19 A 9 9 0 0 1 21 19 Z"></path><line x1="12" y1="19" x2="12" y2="16"></line><line x1="6.3" y1="13.3" x2="8.4" y2="14.8"></line><line x1="17.7" y1="13.3" x2="15.6" y2="14.8"></line></svg>
+                                {:else if t.id === 'compass'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><path d="M12 2v4"></path><circle cx="12" cy="7" r="2"></circle><path d="M10.5 8.5 L5 21"></path><path d="M13.5 8.5 L19 21"></path><circle cx="5" cy="21" r="1" fill="currentColor"></circle></svg>
+                                {:else if t.id === 'coordLine'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><line x1="2" y1="12" x2="22" y2="12"></line><polyline points="17 7 22 12 17 17"></polyline><line x1="6" y1="9" x2="6" y2="15"></line><line x1="12" y1="8" x2="12" y2="16"></line><line x1="18" y1="9" x2="18" y2="15"></line></svg>
+                                {:else if t.id === 'coordPlane2D'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><line x1="3" y1="12" x2="21" y2="12"></line><polyline points="17 8 21 12 17 16"></polyline><line x1="12" y1="21" x2="12" y2="3"></line><polyline points="8 7 12 3 16 7"></polyline><circle cx="12" cy="12" r="1.5" fill="currentColor"></circle></svg>
+                                {:else if t.id === 'coordPlane3D'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><line x1="12" y1="12" x2="21" y2="12"></line><polyline points="18 9 21 12 18 15"></polyline><line x1="12" y1="12" x2="12" y2="3"></line><polyline points="9 6 12 3 15 6"></polyline><line x1="12" y1="12" x2="4" y2="20"></line><polyline points="4 16 4 20 8 20"></polyline><circle cx="12" cy="12" r="1.5" fill="currentColor"></circle></svg>
+                                {:else if t.id === 'colorPicker'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path></svg>
+                                {:else if t.id === 'strokeWidth'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><line x1="3" y1="6" x2="21" y2="6" stroke-width="1.5"></line><line x1="3" y1="12" x2="21" y2="12" stroke-width="3"></line><line x1="3" y1="18" x2="21" y2="18" stroke-width="4.5"></line></svg>
+                                {:else if t.id === 'shapePicker'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><polygon points="12 4 4 19 20 19"></polygon><circle cx="17" cy="8" r="3"></circle></svg>
+                                {:else if t.id === 'zoomIn'}
+                                    <img src={zoomInIcon} alt={t.label} class="icon" />
+                                {:else if t.id === 'zoomOut'}
+                                    <img src={zoomOutIcon} alt={t.label} class="icon" />
+                                {:else if t.id === 'zoom100'}
+                                    <img src={zoom100Icon} alt={t.label} class="icon" />
+                                {:else if t.id === 'undo'}
+                                    <img src={undoIcon} alt={t.label} class="icon" />
+                                {:else if t.id === 'redo'}
+                                    <img src={redoIcon} alt={t.label} class="icon" />
+                                {:else if t.id === 'clearConfirm'}
+                                    <img src={clearIcon} alt={t.label} class="icon" />
+                                {:else if t.id === 'exportBoard'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                                {:else if t.id === 'exportPdf'}
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon text-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><circle cx="10" cy="9" r="1"></circle></svg>
+                                {/if}
+                            </div>
+                            <span class="item-label">{t.label}</span>
                         </button>
                     {/each}
                 </div>
@@ -417,13 +551,6 @@
                 border-top: none;
                 border-left: 1px solid #ddd;
                 margin: 0 4px;
-            }
-            
-            .tool-menu {
-                left: 100%;
-                top: 0;
-                margin-left: 10px;
-                margin-top: 0;
             }
         }
     }
@@ -512,57 +639,110 @@
     
     .tool-menu {
         position: absolute;
-        top: 100%;
-        left: 0;
-        margin-top: 10px;
-        background: white;
+        top: 0;
+        left: calc(100% + 10px);
+        background: #ffffff;
         border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        width: 220px;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+        border: 1px solid #e2e8f0;
         z-index: 1001;
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        cursor: default;
+        user-select: none;
     }
     
     .tool-menu-header {
-        padding: 10px 15px;
-        font-weight: bold;
-        border-bottom: 1px solid #ddd;
+        padding: 8px 12px;
+        font-weight: 600;
+        border-bottom: 1px solid #e9ecef;
         background: #f8f9fa;
-        font-size: 14px;
-        color: #333;
-    }
-    
-    .tool-menu-list {
-        max-height: 250px;
-        overflow-y: auto;
-        padding: 5px;
-    }
-    
-    .tool-menu-item {
-        width: 100%;
-        height: auto;
-        padding: 8px 10px;
+        font-size: 13px;
+        color: #495057;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        text-align: left;
-        border-radius: 6px;
-        font-size: 14px;
-        color: #333;
+        justify-content: space-between;
+    }
+    
+    .tool-menu-grid {
+        display: grid;
+        grid-auto-flow: column;
+        grid-template-rows: repeat(6, 62px);
+        gap: 6px;
+        padding: 8px;
+        overflow-x: auto;
+    }
+    
+    .tool-grid-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 62px;
+        padding: 4px 6px;
+        border-radius: 8px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        gap: 3px;
+        box-sizing: border-box;
         
-        .tool-cat {
-            font-size: 11px;
-            color: #888;
+        &:hover:not(.disabled) {
+            background: #e7f1ff;
+            border-color: #bad3fe;
+            color: #0d6efd;
+            transform: translateY(-1px);
+
+            .item-icon-container .text-icon {
+                color: #0d6efd;
+            }
         }
         
+        &:active:not(.disabled) {
+            transform: translateY(0);
+        }
+
         &.disabled {
-            opacity: 0.5;
+            opacity: 0.4;
             cursor: not-allowed;
-            &:hover {
-                background: transparent;
+            background: #f1f3f5;
+            border-color: #e9ecef;
+        }
+
+        .item-icon-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            
+            .icon {
+                width: 22px;
+                height: 22px;
+                object-fit: contain;
             }
+            
+            .text-icon {
+                color: #495057;
+                transition: color 0.15s ease;
+            }
+        }
+
+        .item-label {
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.15;
+            color: #495057;
+            text-align: center;
+            max-width: 100%;
+            word-break: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
     }
 

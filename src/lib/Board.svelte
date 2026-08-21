@@ -423,7 +423,10 @@
             ((boardData.rulers && boardData.rulers.length > 0) ||
                 (boardData.setSquares && boardData.setSquares.length > 0) ||
                 (boardData.protractors && boardData.protractors.length > 0) ||
-                (boardData.compasses && boardData.compasses.length > 0)) &&
+                (boardData.compasses && boardData.compasses.length > 0) ||
+                (boardData.coordLines && boardData.coordLines.length > 0) ||
+                (boardData.coordPlanes2D && boardData.coordPlanes2D.length > 0) ||
+                (boardData.coordPlanes3D && boardData.coordPlanes3D.length > 0)) &&
             (brushSettings.tool === "brush" ||
                 brushSettings.tool === "eraser" ||
                 brushSettings.tool === "shape")

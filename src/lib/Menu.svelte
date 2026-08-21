@@ -1,10 +1,11 @@
 <script>
     import { onMount } from "svelte";
-    import { boardData, bgSettings, saveBgSettings, saveState, deleteBoardFromDB, customPanelsData, savePanelsToDB, addRuler, addSetSquare, addProtractor, addCompass } from "$lib";
+    import { boardData, bgSettings, saveBgSettings, saveState, deleteBoardFromDB, customPanelsData, savePanelsToDB, addRuler, addSetSquare, addProtractor, addCompass, addCoordLine, addCoordPlane2D, addCoordPlane3D } from "$lib";
 
     let isOpen = $state(false);
     let isBgOpen = $state(false);
     let isPanelsOpen = $state(false);
+    let isToolsOpen = $state(false);
     let menuContainer;
     let fileInput;
 
@@ -13,6 +14,7 @@
         if (!isOpen) {
             isBgOpen = false;
             isPanelsOpen = false;
+            isToolsOpen = false;
         }
     }
 
@@ -20,6 +22,7 @@
         isOpen = false;
         isBgOpen = false;
         isPanelsOpen = false;
+        isToolsOpen = false;
     }
 
     onMount(() => {
@@ -40,6 +43,13 @@
                 {
                     version: 1,
                     lines: boardData.lines,
+                    rulers: boardData.rulers,
+                    setSquares: boardData.setSquares,
+                    protractors: boardData.protractors,
+                    compasses: boardData.compasses,
+                    coordLines: boardData.coordLines,
+                    coordPlanes2D: boardData.coordPlanes2D,
+                    coordPlanes3D: boardData.coordPlanes3D,
                     zoom: boardData.zoom,
                     offsetX: boardData.offsetX,
                     offsetY: boardData.offsetY,
@@ -71,6 +81,7 @@
     function triggerImport() {
         isBgOpen = false;
         isPanelsOpen = false;
+        isToolsOpen = false;
         fileInput.click();
     }
 
@@ -93,6 +104,13 @@
 
                 // Оновлюємо дані дошки
                 boardData.lines = parsed.lines;
+                if (Array.isArray(parsed.rulers)) boardData.rulers = parsed.rulers;
+                if (Array.isArray(parsed.setSquares)) boardData.setSquares = parsed.setSquares;
+                if (Array.isArray(parsed.protractors)) boardData.protractors = parsed.protractors;
+                if (Array.isArray(parsed.compasses)) boardData.compasses = parsed.compasses;
+                if (Array.isArray(parsed.coordLines)) boardData.coordLines = parsed.coordLines;
+                if (Array.isArray(parsed.coordPlanes2D)) boardData.coordPlanes2D = parsed.coordPlanes2D;
+                if (Array.isArray(parsed.coordPlanes3D)) boardData.coordPlanes3D = parsed.coordPlanes3D;
 
                 if (typeof parsed.zoom === "number") {
                     boardData.zoom = parsed.zoom;
@@ -801,7 +819,7 @@
                 <button
                     class="dropdown-item submenu-trigger"
                     class:active={isPanelsOpen}
-                    onclick={() => { isBgOpen = false; isPanelsOpen = !isPanelsOpen; }}
+                    onclick={() => { isBgOpen = false; isToolsOpen = false; isPanelsOpen = !isPanelsOpen; }}
                 >
                     <svg
                         class="item-icon"
@@ -908,6 +926,240 @@
                 {/if}
             </div>
 
+            <!-- Пункт Інструменти з підменю -->
+            <div class="submenu-wrapper" class:submenu-open={isToolsOpen}>
+                <button
+                    class="dropdown-item submenu-trigger"
+                    class:active={isToolsOpen}
+                    onclick={() => { isBgOpen = false; isPanelsOpen = false; isToolsOpen = !isToolsOpen; }}
+                >
+                    <svg
+                        class="item-icon"
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                    </svg>
+                    <span>Інструменти</span>
+                    <svg
+                        class="chevron"
+                        class:rotated={isToolsOpen}
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+
+                {#if isToolsOpen}
+                    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+                    <div
+                        class="bg-submenu tools-submenu"
+                        onpointerdown={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            id="ruler-option"
+                            class="dropdown-item"
+                            onclick={() => { addRuler(); closeMenu(); }}
+                        >
+                            <svg
+                                class="item-icon"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                                <line x1="6" y1="6" x2="6" y2="12"></line>
+                                <line x1="10" y1="6" x2="10" y2="10"></line>
+                                <line x1="14" y1="6" x2="14" y2="12"></line>
+                                <line x1="18" y1="6" x2="18" y2="10"></line>
+                            </svg>
+                            <span>Лінійка</span>
+                        </button>
+
+                        <button
+                            id="setsquare-option"
+                            class="dropdown-item"
+                            onclick={() => { addSetSquare(); closeMenu(); }}
+                        >
+                            <svg
+                                class="item-icon"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <polygon points="3,3 21,21 3,21"></polygon>
+                                <line x1="7" y1="21" x2="7" y2="18"></line>
+                                <line x1="11" y1="21" x2="11" y2="18"></line>
+                                <line x1="15" y1="21" x2="15" y2="18"></line>
+                                <line x1="3" y1="17" x2="6" y2="17"></line>
+                                <line x1="3" y1="13" x2="6" y2="13"></line>
+                                <line x1="3" y1="9" x2="6" y2="9"></line>
+                            </svg>
+                            <span>Косинець</span>
+                        </button>
+
+                        <button
+                            id="protractor-option"
+                            class="dropdown-item"
+                            onclick={() => { addProtractor(); closeMenu(); }}
+                        >
+                            <svg
+                                class="item-icon"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M 3 19 A 9 9 0 0 1 21 19 Z"></path>
+                                <line x1="12" y1="19" x2="12" y2="16"></line>
+                                <line x1="6.3" y1="13.3" x2="8.4" y2="14.8"></line>
+                                <line x1="17.7" y1="13.3" x2="15.6" y2="14.8"></line>
+                            </svg>
+                            <span>Транспортир</span>
+                        </button>
+
+                        <button
+                            id="compass-option"
+                            class="dropdown-item"
+                            onclick={() => { addCompass(); closeMenu(); }}
+                        >
+                            <svg
+                                class="item-icon"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M12 2v4"></path>
+                                <circle cx="12" cy="7" r="2"></circle>
+                                <path d="M10.5 8.5 L5 21"></path>
+                                <path d="M13.5 8.5 L19 21"></path>
+                                <circle cx="5" cy="21" r="1" fill="currentColor"></circle>
+                                <path d="M 8 15 Q 12 13 16 15" stroke-dasharray="2 2"></path>
+                            </svg>
+                            <span>Циркуль</span>
+                        </button>
+
+                        <button
+                            id="coord-line-option"
+                            class="dropdown-item"
+                            onclick={() => { addCoordLine(); closeMenu(); }}
+                        >
+                            <svg
+                                class="item-icon"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <line x1="2" y1="12" x2="22" y2="12"></line>
+                                <polyline points="17 7 22 12 17 17"></polyline>
+                                <line x1="6" y1="9" x2="6" y2="15"></line>
+                                <line x1="12" y1="8" x2="12" y2="16"></line>
+                                <line x1="18" y1="9" x2="18" y2="15"></line>
+                            </svg>
+                            <span>Координатна пряма</span>
+                        </button>
+
+                        <button
+                            id="coord-plane-2d-option"
+                            class="dropdown-item"
+                            onclick={() => { addCoordPlane2D(); closeMenu(); }}
+                        >
+                            <svg
+                                class="item-icon"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <line x1="3" y1="12" x2="21" y2="12"></line>
+                                <polyline points="17 8 21 12 17 16"></polyline>
+                                <line x1="12" y1="21" x2="12" y2="3"></line>
+                                <polyline points="8 7 12 3 16 7"></polyline>
+                                <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
+                            </svg>
+                            <span>Координатна площина (x; y)</span>
+                        </button>
+
+                        <button
+                            id="coord-plane-3d-option"
+                            class="dropdown-item"
+                            onclick={() => { addCoordPlane3D(); closeMenu(); }}
+                        >
+                            <svg
+                                class="item-icon"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <line x1="12" y1="12" x2="21" y2="12"></line>
+                                <polyline points="18 9 21 12 18 15"></polyline>
+                                <line x1="12" y1="12" x2="12" y2="3"></line>
+                                <polyline points="9 6 12 3 15 6"></polyline>
+                                <line x1="12" y1="12" x2="4" y2="20"></line>
+                                <polyline points="4 16 4 20 8 20"></polyline>
+                                <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
+                            </svg>
+                            <span>Координатна площина (x; y; z)</span>
+                        </button>
+                    </div>
+                {/if}
+            </div>
+
             <!-- Роздільник -->
             <div class="divider"></div>
 
@@ -985,112 +1237,6 @@
                     <circle cx="10" cy="9" r="1"></circle>
                 </svg>
                 <span>Експортувати як PDF</span>
-            </button>
-
-            <button
-                id="ruler-option"
-                class="dropdown-item"
-                onclick={() => { addRuler(); closeMenu(); }}
-            >
-                <svg
-                    class="item-icon"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <rect x="2" y="6" width="20" height="12" rx="2"></rect>
-                    <line x1="6" y1="6" x2="6" y2="12"></line>
-                    <line x1="10" y1="6" x2="10" y2="10"></line>
-                    <line x1="14" y1="6" x2="14" y2="12"></line>
-                    <line x1="18" y1="6" x2="18" y2="10"></line>
-                </svg>
-                <span>Лінійка</span>
-            </button>
-
-            <button
-                id="setsquare-option"
-                class="dropdown-item"
-                onclick={() => { addSetSquare(); closeMenu(); }}
-            >
-                <svg
-                    class="item-icon"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <polygon points="3,3 21,21 3,21"></polygon>
-                    <line x1="7" y1="21" x2="7" y2="18"></line>
-                    <line x1="11" y1="21" x2="11" y2="18"></line>
-                    <line x1="15" y1="21" x2="15" y2="18"></line>
-                    <line x1="3" y1="17" x2="6" y2="17"></line>
-                    <line x1="3" y1="13" x2="6" y2="13"></line>
-                    <line x1="3" y1="9" x2="6" y2="9"></line>
-                </svg>
-                <span>Косинець</span>
-            </button>
-
-            <button
-                id="protractor-option"
-                class="dropdown-item"
-                onclick={() => { addProtractor(); closeMenu(); }}
-            >
-                <svg
-                    class="item-icon"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M 3 19 A 9 9 0 0 1 21 19 Z"></path>
-                    <line x1="12" y1="19" x2="12" y2="16"></line>
-                    <line x1="6.3" y1="13.3" x2="8.4" y2="14.8"></line>
-                    <line x1="17.7" y1="13.3" x2="15.6" y2="14.8"></line>
-                </svg>
-                <span>Транспортир</span>
-            </button>
-
-            <button
-                id="compass-option"
-                class="dropdown-item"
-                onclick={() => { addCompass(); closeMenu(); }}
-            >
-                <svg
-                    class="item-icon"
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M12 2v4"></path>
-                    <circle cx="12" cy="7" r="2"></circle>
-                    <path d="M10.5 8.5 L5 21"></path>
-                    <path d="M13.5 8.5 L19 21"></path>
-                    <circle cx="5" cy="21" r="1" fill="currentColor"></circle>
-                    <path d="M 8 15 Q 12 13 16 15" stroke-dasharray="2 2"></path>
-                </svg>
-                <span>Циркуль</span>
             </button>
 
             <!-- Роздільник -->
@@ -1487,6 +1633,18 @@
         animation: fadeInLeft 0.18s cubic-bezier(0.4, 0, 0.2, 1);
         transform-origin: bottom left;
         z-index: 1100;
+    }
+
+    .tools-submenu {
+        gap: 2px;
+        padding: 8px;
+        width: 220px;
+    }
+
+    .tools-submenu .dropdown-item {
+        padding: 8px 10px;
+        border-radius: 8px;
+        font-size: 13.5px;
     }
 
     @keyframes fadeInLeft {

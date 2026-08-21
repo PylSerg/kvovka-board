@@ -19,8 +19,105 @@ export const boardData = $state({
     rulers: [],           // Лінійки: { id, x, y, angle, lengthCm, scaleFactor }
     setSquares: [],       // Косинці: { id, x, y, angle, legCm, scaleFactor, flipX, flipY }
     protractors: [],      // Транспортири: { id, x, y, angle, radiusCm, scaleFactor, flipY }
-    compasses: []         // Циркулі: { id, x, y, angle, radiusCm, scaleFactor }
+    compasses: [],        // Циркулі: { id, x, y, angle, radiusCm, scaleFactor }
+    coordLines: [],       // Координатні прямі: { id, x, y, angle, minVal, maxVal, stepPx, scaleFactor, showNumbers, showArrows, axisLabel }
+    coordPlanes2D: [],    // Координатні площини 2D: { id, x, y, angle, minX, maxX, minY, maxY, stepPx, scaleFactor, showGrid, showNumbers, showArrows, labelX, labelY }
+    coordPlanes3D: []     // Координатні площини 3D: { id, x, y, angle, axisXAngle, axisXForeshortening, rangeX, rangeY, rangeZ, stepPx, scaleFactor, showNegativeAxes, showPlanes, showNumbers, labelX, labelY, labelZ }
 });
+
+export function addCoordLine() {
+    const screenCenterX = typeof window !== 'undefined' ? window.innerWidth / 2 : 400;
+    const screenCenterY = typeof window !== 'undefined' ? window.innerHeight / 2 : 300;
+    const canvasX = (screenCenterX - boardData.offsetX) / boardData.zoom;
+    const canvasY = (screenCenterY - boardData.offsetY) / boardData.zoom;
+
+    const newCoordLine = {
+        id: Date.now() + Math.random(),
+        x: canvasX,
+        y: canvasY,
+        angle: 0,
+        minVal: -5,
+        maxVal: 5,
+        stepPx: 40,
+        scaleFactor: 1.0,
+        showNumbers: true,
+        showArrows: 'positive',
+        axisLabel: 'x'
+    };
+    boardData.coordLines = [...(boardData.coordLines || []), newCoordLine];
+}
+
+export function deleteCoordLine(id) {
+    if (boardData.coordLines) {
+        boardData.coordLines = boardData.coordLines.filter(c => c.id !== id);
+    }
+}
+
+export function addCoordPlane2D() {
+    const screenCenterX = typeof window !== 'undefined' ? window.innerWidth / 2 : 400;
+    const screenCenterY = typeof window !== 'undefined' ? window.innerHeight / 2 : 300;
+    const canvasX = (screenCenterX - boardData.offsetX) / boardData.zoom;
+    const canvasY = (screenCenterY - boardData.offsetY) / boardData.zoom;
+
+    const newCoordPlane = {
+        id: Date.now() + Math.random(),
+        x: canvasX,
+        y: canvasY,
+        angle: 0,
+        minX: -5,
+        maxX: 5,
+        minY: -5,
+        maxY: 5,
+        stepPx: 40,
+        scaleFactor: 1.0,
+        showGrid: true,
+        showNumbers: true,
+        showArrows: true,
+        labelX: 'x',
+        labelY: 'y'
+    };
+    boardData.coordPlanes2D = [...(boardData.coordPlanes2D || []), newCoordPlane];
+}
+
+export function deleteCoordPlane2D(id) {
+    if (boardData.coordPlanes2D) {
+        boardData.coordPlanes2D = boardData.coordPlanes2D.filter(p => p.id !== id);
+    }
+}
+
+export function addCoordPlane3D() {
+    const screenCenterX = typeof window !== 'undefined' ? window.innerWidth / 2 : 400;
+    const screenCenterY = typeof window !== 'undefined' ? window.innerHeight / 2 : 300;
+    const canvasX = (screenCenterX - boardData.offsetX) / boardData.zoom;
+    const canvasY = (screenCenterY - boardData.offsetY) / boardData.zoom;
+
+    const newCoordPlane3D = {
+        id: Date.now() + Math.random(),
+        x: canvasX,
+        y: canvasY,
+        angle: 0,
+        axisXAngle: 135,
+        axisXForeshortening: 0.5,
+        rangeX: 5,
+        rangeY: 5,
+        rangeZ: 5,
+        stepPx: 40,
+        scaleFactor: 1.0,
+        showNegativeAxes: true,
+        showPlanes: true,
+        showNumbers: true,
+        labelX: 'x',
+        labelY: 'y',
+        labelZ: 'z'
+    };
+    boardData.coordPlanes3D = [...(boardData.coordPlanes3D || []), newCoordPlane3D];
+}
+
+export function deleteCoordPlane3D(id) {
+    if (boardData.coordPlanes3D) {
+        boardData.coordPlanes3D = boardData.coordPlanes3D.filter(p => p.id !== id);
+    }
+}
 
 export function addCompass() {
     const screenCenterX = typeof window !== 'undefined' ? window.innerWidth / 2 : 400;

@@ -1,13 +1,13 @@
 <script>
     import { onMount, onDestroy } from "svelte";
-    import { Board, Toolbar, Menu, PdfExportPanel, PdfFrameOverlay, boardData, loadBoardFromDB, saveBoardToDB, saveState, customPanelsData, loadPanelsFromDB, CustomPanel, RulerOverlay, SetSquareOverlay, ProtractorOverlay, CompassOverlay } from "$lib";
+    import { Board, Toolbar, Menu, PdfExportPanel, PdfFrameOverlay, boardData, loadBoardFromDB, saveBoardToDB, saveState, customPanelsData, loadPanelsFromDB, CustomPanel, RulerOverlay, SetSquareOverlay, ProtractorOverlay, CompassOverlay, CoordLineOverlay, CoordPlane2DOverlay, CoordPlane3DOverlay } from "$lib";
 
     let autoSaveInterval;
 
     onMount(async () => {
         try {
             const savedBoard = await loadBoardFromDB();
-            if (savedBoard && ((savedBoard.lines && savedBoard.lines.length > 0) || (savedBoard.rulers && savedBoard.rulers.length > 0) || (savedBoard.setSquares && savedBoard.setSquares.length > 0) || (savedBoard.protractors && savedBoard.protractors.length > 0) || (savedBoard.compasses && savedBoard.compasses.length > 0))) {
+            if (savedBoard && ((savedBoard.lines && savedBoard.lines.length > 0) || (savedBoard.rulers && savedBoard.rulers.length > 0) || (savedBoard.setSquares && savedBoard.setSquares.length > 0) || (savedBoard.protractors && savedBoard.protractors.length > 0) || (savedBoard.compasses && savedBoard.compasses.length > 0) || (savedBoard.coordLines && savedBoard.coordLines.length > 0) || (savedBoard.coordPlanes2D && savedBoard.coordPlanes2D.length > 0) || (savedBoard.coordPlanes3D && savedBoard.coordPlanes3D.length > 0))) {
                 if (confirm("Знайдено збережену дошку після попереднього сеансу. Відновити її?")) {
                     saveState();
                     boardData.lines = savedBoard.lines || [];
@@ -15,6 +15,9 @@
                     if (Array.isArray(savedBoard.setSquares)) boardData.setSquares = savedBoard.setSquares;
                     if (Array.isArray(savedBoard.protractors)) boardData.protractors = savedBoard.protractors;
                     if (Array.isArray(savedBoard.compasses)) boardData.compasses = savedBoard.compasses;
+                    if (Array.isArray(savedBoard.coordLines)) boardData.coordLines = savedBoard.coordLines;
+                    if (Array.isArray(savedBoard.coordPlanes2D)) boardData.coordPlanes2D = savedBoard.coordPlanes2D;
+                    if (Array.isArray(savedBoard.coordPlanes3D)) boardData.coordPlanes3D = savedBoard.coordPlanes3D;
                     if (typeof savedBoard.zoom === "number") boardData.zoom = savedBoard.zoom;
                     if (typeof savedBoard.offsetX === "number") boardData.offsetX = savedBoard.offsetX;
                     if (typeof savedBoard.offsetY === "number") boardData.offsetY = savedBoard.offsetY;
@@ -48,6 +51,9 @@
                     setSquares: boardData.setSquares,
                     protractors: boardData.protractors,
                     compasses: boardData.compasses,
+                    coordLines: boardData.coordLines,
+                    coordPlanes2D: boardData.coordPlanes2D,
+                    coordPlanes3D: boardData.coordPlanes3D,
                     zoom: boardData.zoom,
                     offsetX: boardData.offsetX,
                     offsetY: boardData.offsetY,
@@ -82,6 +88,9 @@
         <SetSquareOverlay />
         <ProtractorOverlay />
         <CompassOverlay />
+        <CoordLineOverlay />
+        <CoordPlane2DOverlay />
+        <CoordPlane3DOverlay />
     {:else}
         <PdfExportPanel />
         <PdfFrameOverlay />
