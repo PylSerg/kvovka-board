@@ -1,3 +1,26 @@
+const FILLABLE_2D_SHAPES = new Set([
+    "circle",
+    "square",
+    "ellipse",
+    "rectangle",
+    "triangle",
+    "equilateral_triangle",
+    "right_triangle",
+    "trapezoid",
+    "parallelogram",
+]);
+
+function fillPolygon(ctx, points) {
+    if (!points || points.length < 3) return;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+    }
+    ctx.closePath();
+    ctx.fill();
+}
+
 export function drawShape(ctx, shapeObj) {
     if (!shapeObj.points || shapeObj.points.length < 2) return;
 
@@ -10,8 +33,13 @@ export function drawShape(ctx, shapeObj) {
     ctx.lineJoin = "round";
     ctx.strokeStyle = shapeObj.color;
 
-    // Встановлюємо пунктир для eraser або самої фігури
-    if (shapeObj.tool === "eraser" || shapeObj.color === "#ffffff") {
+    const isEraseStroke = shapeObj.tool === "eraser" || shapeObj.color === "#ffffff";
+    const fillColor = shapeObj.fillColor || null;
+    const shouldFill = Boolean(fillColor);
+    const fillClosedPath = shouldFill && FILLABLE_2D_SHAPES.has(shapeObj.shapeType);
+
+    // Білий контур працює як гумка. Якщо є заливка — спочатку малюємо її поверх дошки.
+    if (isEraseStroke && !shouldFill) {
         ctx.globalCompositeOperation = "destination-out";
     } else {
         ctx.globalCompositeOperation = "source-over";
@@ -122,6 +150,14 @@ export function drawShape(ctx, shapeObj) {
             if (sRadius < 1) break;
             const sPerspective = 0.3; // сплющення еліпса по вертикалі (перспектива)
 
+            if (shouldFill) {
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.arc(p1.x, p1.y, sRadius, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+            }
+
             // 1. Зовнішне коло + екватор (суцільна передня частина)
             ctx.arc(p1.x, p1.y, sRadius, 0, 2 * Math.PI);
             ctx.moveTo(p1.x - sRadius, p1.y);
@@ -174,46 +210,93 @@ export function drawShape(ctx, shapeObj) {
             break;
         }
 
-        case 'cube':
+        case 'cube': {
             const cubeSide = Math.max(Math.abs(p2.x - p1.x), Math.abs(p2.y - p1.y)) * 0.7;
             const cbx = p1.x;
             const cby = p1.y;
             const cdx = cubeSide * 0.4;
             const cdy = cubeSide * 0.4;
-            // Front face
+            const A = { x: cbx, y: cby };
+            const B = { x: cbx + cubeSide, y: cby };
+            const C = { x: cbx + cubeSide, y: cby + cubeSide };
+            const D = { x: cbx, y: cby + cubeSide };
+            const E = { x: cbx + cdx, y: cby - cdy };
+            const F = { x: cbx + cubeSide + cdx, y: cby - cdy };
+            const G = { x: cbx + cubeSide + cdx, y: cby + cubeSide - cdy };
+            const H = { x: cbx + cdx, y: cby + cubeSide - cdy };
+
+            if (shouldFill) {
+                ctx.fillStyle = fillColor;
+                fillPolygon(ctx, [E, F, G, H]); // задня
+                fillPolygon(ctx, [D, C, G, H]); // нижня
+                fillPolygon(ctx, [A, E, H, D]); // ліва
+                fillPolygon(ctx, [B, F, G, C]); // права
+                fillPolygon(ctx, [A, B, F, E]); // верхня
+                fillPolygon(ctx, [A, B, C, D]); // передня
+                ctx.beginPath();
+            }
+
             ctx.rect(cbx, cby, cubeSide, cubeSide);
-            // Back face
             ctx.rect(cbx + cdx, cby - cdy, cubeSide, cubeSide);
-            // Connecting lines
             ctx.moveTo(cbx, cby); ctx.lineTo(cbx + cdx, cby - cdy);
             ctx.moveTo(cbx + cubeSide, cby); ctx.lineTo(cbx + cubeSide + cdx, cby - cdy);
             ctx.moveTo(cbx + cubeSide, cby + cubeSide); ctx.lineTo(cbx + cubeSide + cdx, cby + cubeSide - cdy);
             ctx.moveTo(cbx, cby + cubeSide); ctx.lineTo(cbx + cdx, cby + cubeSide - cdy);
             break;
+        }
 
-        case 'parallelepiped':
+        case 'parallelepiped': {
             const ppx = p1.x;
             const ppy = p1.y;
             const ppw = width * 0.7;
             const pph = height * 0.7;
             const pdx = width * 0.3;
             const pdy = height * 0.3;
+            const A = { x: ppx, y: ppy };
+            const B = { x: ppx + ppw, y: ppy };
+            const C = { x: ppx + ppw, y: ppy + pph };
+            const D = { x: ppx, y: ppy + pph };
+            const E = { x: ppx + pdx, y: ppy - pdy };
+            const F = { x: ppx + ppw + pdx, y: ppy - pdy };
+            const G = { x: ppx + ppw + pdx, y: ppy + pph - pdy };
+            const H = { x: ppx + pdx, y: ppy + pph - pdy };
 
-            // Front face
+            if (shouldFill) {
+                ctx.fillStyle = fillColor;
+                fillPolygon(ctx, [E, F, G, H]);
+                fillPolygon(ctx, [D, C, G, H]);
+                fillPolygon(ctx, [A, E, H, D]);
+                fillPolygon(ctx, [B, F, G, C]);
+                fillPolygon(ctx, [A, B, F, E]);
+                fillPolygon(ctx, [A, B, C, D]);
+                ctx.beginPath();
+            }
+
             ctx.rect(ppx, ppy, ppw, pph);
-            // Back face
             ctx.rect(ppx + pdx, ppy - pdy, ppw, pph);
-            // Connecting lines
             ctx.moveTo(ppx, ppy); ctx.lineTo(ppx + pdx, ppy - pdy);
             ctx.moveTo(ppx + ppw, ppy); ctx.lineTo(ppx + ppw + pdx, ppy - pdy);
             ctx.moveTo(ppx + ppw, ppy + pph); ctx.lineTo(ppx + ppw + pdx, ppy + pph - pdy);
             ctx.moveTo(ppx, ppy + pph); ctx.lineTo(ppx + pdx, ppy + pph - pdy);
             break;
+        }
 
-        case 'cylinder':
+        case 'cylinder': {
             const cyw = width / 2;
             const cyh = height;
             const cyry = Math.min(cyw * 0.3, cyh * 0.2);
+
+            if (shouldFill) {
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.ellipse(cx, maxY - cyry, cyw, cyry, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.fillRect(minX, minY + cyry, width, Math.max(0, height - 2 * cyry));
+                ctx.beginPath();
+                ctx.ellipse(cx, minY + cyry, cyw, cyry, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.beginPath();
+            }
 
             ctx.ellipse(cx, minY + cyry, cyw, cyry, 0, 0, 2 * Math.PI);
             ctx.moveTo(minX, minY + cyry);
@@ -229,11 +312,25 @@ export function drawShape(ctx, shapeObj) {
             ctx.setLineDash([5, 5]);
             ctx.ellipse(cx, maxY - cyry, cyw, cyry, 0, Math.PI, 2 * Math.PI);
             break;
+        }
 
-        case 'cone':
+        case 'cone': {
             const cow = width / 2;
             const coh = height;
             const cory = Math.min(cow * 0.3, coh * 0.2);
+
+            if (shouldFill) {
+                ctx.fillStyle = fillColor;
+                ctx.beginPath();
+                ctx.ellipse(cx, maxY - cory, cow, cory, 0, 0, 2 * Math.PI);
+                ctx.fill();
+                fillPolygon(ctx, [
+                    { x: cx, y: minY },
+                    { x: minX, y: maxY - cory },
+                    { x: maxX, y: maxY - cory },
+                ]);
+                ctx.beginPath();
+            }
 
             ctx.moveTo(cx, minY);
             ctx.lineTo(minX, maxY - cory);
@@ -248,6 +345,7 @@ export function drawShape(ctx, shapeObj) {
             ctx.setLineDash([5, 5]);
             ctx.ellipse(cx, maxY - cory, cow, cory, 0, Math.PI, 2 * Math.PI);
             break;
+        }
 
         case 'pyramid': {
             // Правильна чотирикутна піраміда з перспективною прямокутною основою
@@ -259,6 +357,16 @@ export function drawShape(ctx, shapeObj) {
             const fr = { x: maxX, y: maxY }; // передній-правий
             const br = { x: maxX - pDepth, y: maxY - pRise }; // задній-правий (видимий)
             const bl = { x: minX + pDepth, y: maxY - pRise }; // задній-лівий  (хований)
+
+            if (shouldFill) {
+                ctx.fillStyle = fillColor;
+                fillPolygon(ctx, [fl, fr, br, bl]);
+                fillPolygon(ctx, [apex, bl, fl]);
+                fillPolygon(ctx, [apex, bl, br]);
+                fillPolygon(ctx, [apex, fr, br]);
+                fillPolygon(ctx, [apex, fl, fr]);
+                ctx.beginPath();
+            }
 
             // Суцільні: ребра → всі 4 бічні ребра, видимі ребра основи
             ctx.moveTo(apex.x, apex.y); ctx.lineTo(fl.x, fl.y);   // ліва бічна грань
@@ -281,7 +389,16 @@ export function drawShape(ctx, shapeObj) {
             break;
     }
 
+    if (fillClosedPath) {
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+    }
+
+    if (isEraseStroke) {
+        ctx.globalCompositeOperation = "destination-out";
+    }
     ctx.stroke();
+    ctx.globalCompositeOperation = "source-over";
 
     // Відновлюємо налаштування ліній
     ctx.setLineDash([]);

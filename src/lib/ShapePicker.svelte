@@ -5,7 +5,9 @@
     let {
         isVertical = true,
         disabled = false,
-        onToolSelect
+        onToolSelect,
+        onChange,
+        onStartEdit,
     } = $props();
 
     let isOpen = $state(false);
@@ -54,6 +56,18 @@
                 { id: "cone", name: "Конус", icon: `${iconBase}<ellipse cx="12" cy="18" rx="8" ry="3" /><path d="M4 18L12 4l8 14" />${iconEnd}` }
             ]
         }
+    ];
+
+    const fillColors = [
+        "#000000",
+        "#808080",
+        "#ffffff",
+        "#ff0000",
+        "#ffa500",
+        "#ffff00",
+        "#0000ff",
+        "#008000",
+        "#800080",
     ];
 
     onMount(() => {
@@ -112,6 +126,12 @@
         isOpen = false;
     }
 
+    function selectFill(color) {
+        if (onStartEdit) onStartEdit();
+        brushSettings.fillColor = color;
+        if (onChange) onChange();
+    }
+
     // Знайдемо поточну іконку
     const currentShapeIcon = $derived.by(() => {
         for (const cat of categories) {
@@ -156,6 +176,27 @@
                     {/each}
                 </div>
             {/each}
+
+            <div class="section-title">Заливка</div>
+            <div class="fill-grid">
+                <button
+                    class="fill-swatch none"
+                    class:selected={!brushSettings.fillColor}
+                    onclick={() => selectFill(null)}
+                    title="Без заливки"
+                    aria-label="Без заливки"
+                ></button>
+                {#each fillColors as c}
+                    <button
+                        class="fill-swatch"
+                        style="background-color: {c};"
+                        class:selected={brushSettings.fillColor === c}
+                        onclick={() => selectFill(c)}
+                        title={c}
+                        aria-label="Заливка {c}"
+                    ></button>
+                {/each}
+            </div>
         </div>
     {/if}
 </div>
@@ -266,5 +307,50 @@
         border-color: #007bff;
         color: #007bff;
         transform: scale(1.1);
+    }
+
+    .fill-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        justify-items: center;
+    }
+
+    .fill-swatch {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        cursor: pointer;
+        padding: 0;
+        transition: transform 0.1s;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .fill-swatch:hover {
+        transform: scale(1.15);
+    }
+
+    .fill-swatch.selected {
+        border: 2px solid #007bff;
+        transform: scale(1.1);
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.3);
+    }
+
+    .fill-swatch.none {
+        background: repeating-linear-gradient(
+            45deg,
+            #f0f0f0,
+            #f0f0f0 3px,
+            #e0e0e0 3px,
+            #e0e0e0 6px
+        );
+        box-shadow: none;
+        border: 1px dashed #ccc;
+    }
+
+    .fill-swatch.none.selected {
+        border: 2px solid #007bff;
+        border-style: solid;
     }
 </style>

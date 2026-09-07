@@ -204,6 +204,12 @@
                     if (brushSettings.width !== selectedLine.width) {
                         brushSettings.width = selectedLine.width;
                     }
+                    if (selectedLine.tool === "shape" || selectedLine.tool === "brush") {
+                        const nextFill = selectedLine.fillColor || null;
+                        if (brushSettings.fillColor !== nextFill) {
+                            brushSettings.fillColor = nextFill;
+                        }
+                    }
                 });
             }
         }
@@ -237,6 +243,10 @@
                 p[p.length - 1].x,
                 p[p.length - 1].y,
             );
+        }
+
+        if (line.fillColor && line.tool !== "eraser" && p.length >= 3) {
+            ctx.fill();
         }
         ctx.stroke();
     }
@@ -288,7 +298,7 @@
                     offscreenCtx.shadowBlur = 10 / boardData.zoom;
                 } else {
                     offscreenCtx.strokeStyle = line.color;
-                    offscreenCtx.fillStyle = line.color;
+                    offscreenCtx.fillStyle = line.fillColor || line.color;
                     offscreenCtx.shadowBlur = 0;
                 }
 
@@ -392,7 +402,7 @@
 
             copiedLines.forEach((line) => {
                 ctx.strokeStyle = line.color;
-                ctx.fillStyle = line.color;
+                ctx.fillStyle = line.fillColor || line.color;
                 const offsetLine = {
                     ...line,
                     points: line.points.map((p) => ({
@@ -1290,6 +1300,7 @@
                     width: brushSettings.width,
                     tool: brushSettings.tool,
                     shapeType: brushSettings.shapeType,
+                    fillColor: brushSettings.fillColor,
                     points: [startPoint],
                 },
             ];

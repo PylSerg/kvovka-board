@@ -4,7 +4,8 @@ export const brushSettings = $state({
     color: '#000000',
     width: 5,
     tool: 'brush', // 'brush', 'eraser', 'select', 'move', 'shape', 'text'
-    shapeType: 'rectangle' // default shape
+    shapeType: 'rectangle', // default shape
+    fillColor: null, // null = без заливки
 });
 
 // Масив усіх намальованих ліній

@@ -113,6 +113,9 @@
                         ...line,
                         color: brushSettings.color,
                         width: brushSettings.width,
+                        ...(line.tool === "shape" || line.tool === "brush"
+                            ? { fillColor: brushSettings.fillColor }
+                            : {}),
                     };
                 }
                 return line;
@@ -231,6 +234,8 @@
         {isVertical}
         disabled={brushSettings.tool === "eraser"}
         onToolSelect={(tool) => (brushSettings.tool = tool)}
+        onChange={handleInput}
+        onStartEdit={handleStartEdit}
     />
 
     <button

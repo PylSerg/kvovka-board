@@ -240,7 +240,14 @@
         if (boardData.selectedLineIds.length > 0) {
             boardData.lines = boardData.lines.map((line) => {
                 if (boardData.selectedLineIds.includes(line.id)) {
-                    return { ...line, color: brushSettings.color, width: brushSettings.width };
+                    return {
+                        ...line,
+                        color: brushSettings.color,
+                        width: brushSettings.width,
+                        ...(line.tool === "shape" || line.tool === "brush"
+                            ? { fillColor: brushSettings.fillColor }
+                            : {}),
+                    };
                 }
                 return line;
             });
@@ -369,7 +376,7 @@
             {:else if toolId === 'strokeWidth'}
                 <StrokeWidthPicker bind:width={brushSettings.width} onChange={handleInput} onStartEdit={handleStartEdit} isVertical={panel.isVertical} />
             {:else if toolId === 'shapePicker'}
-                <ShapePicker isVertical={panel.isVertical} disabled={brushSettings.tool === "eraser"} onToolSelect={(tool) => (brushSettings.tool = tool)} />
+                <ShapePicker isVertical={panel.isVertical} disabled={brushSettings.tool === "eraser"} onToolSelect={(tool) => (brushSettings.tool = tool)} onChange={handleInput} onStartEdit={handleStartEdit} />
             {:else if toolId === 'zoomIn'}
                 <button onclick={zoomIn} title="Збільшити" class="action-btn"><img src={zoomInIcon} alt="Zoom In" class="icon" /></button>
             {:else if toolId === 'zoomOut'}
